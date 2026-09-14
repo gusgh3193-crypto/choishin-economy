@@ -1,0 +1,6 @@
+# 초안(draft): 실제 배포 도메인이 정해지기 전까지 임시 값입니다.
+# TODO: 실제 도메인으로 교체 필요
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
