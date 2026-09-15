@@ -1,0 +1,13 @@
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "금리 인상이 우리 생활에 미치는 영향 5가지 (2026년 최신)",
+  "description": "기준금리 인상이 대출이자, 물가, 부동산, 저축, 소비에 어떤 영향을 주는지 쉽게 정리했습니다. 경제 초보자도 이해할 수 있는 실생활 가이드.",
+  "datePublished": "2026-09-13",
+  "keywords": ["금리 인상", "기준금리", "물가 영향", "대출이자", "경제 상식"],
+  "url": "https://example.com/posts/interest-rate-impact",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://example.com/posts/interest-rate-impact"
+  }
+}
