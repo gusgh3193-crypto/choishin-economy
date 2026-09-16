@@ -5,6 +5,7 @@
 # posts/ 폴더의 모든 마크다운 글이 CLAUDE.md 콘텐츠 규칙을 지키는지 검증한다.
 #   1) 파일명이 YYYY-MM-DD-슬러그.md 형식을 따르는가
 #   2) frontmatter(--- ~ ---)에 title, meta_description, keywords 필드가 모두 있는가
+#   3) 본문에 이탤릭(*...*) 처리된 면책 문구(책임/투자/권장 등 키워드 포함)가 있는가
 #
 # 사용법:
 #   bash scripts/validate_posts.sh
@@ -22,6 +23,8 @@ POSTS_DIR="${REPO_ROOT}/posts"
 
 FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$'
 REQUIRED_FIELDS=(title meta_description keywords)
+# 면책 문구로 인정할 키워드 (이탤릭 처리된 한 줄 안에 하나 이상 포함되어야 함)
+DISCLAIMER_KEYWORDS=(책임 투자 권장)
 
 overall_status=0
 file_count=0
@@ -68,6 +71,28 @@ for filepath in "${post_files[@]}"; do
     done
   fi
 
+  # 4) 면책 문구 검사
+  #    frontmatter 이후 본문에서, 이탤릭(*...*) 처리된 한 줄 중
+  #    면책성 키워드(책임/투자/권장 등)를 포함한 줄이 하나라도 있는지 확인한다.
+  #    (굵게 처리된 **...** 줄은 첫 글자가 '*'가 연속되므로 아래 정규식에서 자연스럽게 제외된다.)
+  body="$(awk 'BEGIN{fence=0} /^---[[:space:]]*$/{fence++; next} fence>=2{print}' "${filepath}")"
+  disclaimer_found=0
+  while IFS= read -r line; do
+    if [[ "${line}" =~ ^\*[^*].*[^*]\*[[:space:]]*$ ]]; then
+      for kw in "${DISCLAIMER_KEYWORDS[@]}"; do
+        if [[ "${line}" == *"${kw}"* ]]; then
+          disclaimer_found=1
+          break
+        fi
+      done
+    fi
+    [ ${disclaimer_found} -eq 1 ] && break
+  done <<< "${body}"
+
+  if [ ${disclaimer_found} -eq 0 ]; then
+    file_problems+=("본문에 면책 문구(이탤릭 처리 + 책임/투자/권장 등 키워드 포함)가 없습니다")
+  fi
+
   if [ ${#file_problems[@]} -eq 0 ]; then
     echo "[PASS] ${filename}"
   else
@@ -83,7 +108,7 @@ echo ""
 echo "검사한 파일 수: ${file_count}"
 
 if [ ${overall_status} -eq 0 ]; then
-  echo "모든 글이 frontmatter(title, meta_description, keywords) 및 파일명 규칙을 통과했습니다."
+  echo "모든 글이 frontmatter(title, meta_description, keywords), 파일명, 면책 문구 규칙을 통과했습니다."
 else
   echo "일부 글에서 문제가 발견되었습니다. 위 [FAIL] 항목을 확인해 수정하세요."
 fi
