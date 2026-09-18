@@ -46,6 +46,32 @@ fi
 SITEMAP_FILE="${SEO_DIR}/sitemap.xml"
 ROBOTS_FILE="${SEO_DIR}/robots.txt"
 
+# 홈페이지 <lastmod>에 쓸 값을 먼저 구한다: posts/ 전체 글의 lastmod(프런트매터
+# date 우선, 없으면 파일명 날짜) 중 가장 최근(가장 큰) 날짜.
+# 실제 각 글 URL의 lastmod 계산 로직 자체는 아래 본 루프에서 그대로 다시 계산한다.
+HOME_LASTMOD=""
+
+for filepath in "${post_files[@]}"; do
+  filename="$(basename "${filepath}")"
+
+  if [[ "${filename}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})-(.+)\.md$ ]]; then
+    filename_date="${BASH_REMATCH[1]}"
+  else
+    continue
+  fi
+
+  frontmatter="$(awk 'NR==1{next} /^---[[:space:]]*$/{exit} {print}' "${filepath}")"
+  date_line="$(echo "${frontmatter}" | grep -E '^date:' | head -n 1)"
+  fm_date="${date_line#date:}"
+  fm_date="$(echo "${fm_date}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+  candidate_lastmod="${fm_date:-${filename_date}}"
+
+  if [ -z "${HOME_LASTMOD}" ] || [[ "${candidate_lastmod}" > "${HOME_LASTMOD}" ]]; then
+    HOME_LASTMOD="${candidate_lastmod}"
+  fi
+done
+
 {
   echo '<?xml version="1.0" encoding="UTF-8"?>'
   echo '<!-- 초안(draft): 실제 배포 도메인이 정해지기 전까지 임시 플레이스홀더(https://example.com)를 사용 중입니다. -->'
@@ -53,6 +79,9 @@ ROBOTS_FILE="${SEO_DIR}/robots.txt"
   echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
   echo "  <url>"
   echo "    <loc>${BASE_URL}/</loc>"
+  if [ -n "${HOME_LASTMOD}" ]; then
+    echo "    <lastmod>${HOME_LASTMOD}</lastmod>"
+  fi
   echo "  </url>"
 } > "${SITEMAP_FILE}"
 
