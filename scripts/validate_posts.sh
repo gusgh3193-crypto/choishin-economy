@@ -71,6 +71,24 @@ for filepath in "${post_files[@]}"; do
     done
   fi
 
+  # 3-1) meta_description 길이 검사 (SEO 권장: 약 160자 전후에서 스니펫이 잘림)
+  #      이 검사는 CLAUDE.md가 정한 규칙이 아니므로 절대 FAIL 처리하지 않는다.
+  #      file_problems/overall_status에 반영하지 않고 별도의 [WARN] 메시지로만 안내한다.
+  #      한글 등 멀티바이트 문자를 바이트가 아닌 "글자 수"로 세기 위해 UTF-8 로케일에서
+  #      wc -m 으로 계산한다 (LC_ALL=C.UTF-8, 스크립트 전역 로케일에는 영향 없음).
+  meta_line="$(echo "${frontmatter}" | sed -n -E '/^meta_description:[[:space:]]*.+/{s/^meta_description:[[:space:]]*//;p;q}')"
+  if [ -n "${meta_line}" ]; then
+    if [[ "${meta_line}" =~ ^\"(.*)\"[[:space:]]*$ ]]; then
+      meta_value="${BASH_REMATCH[1]}"
+    else
+      meta_value="${meta_line}"
+    fi
+    meta_length="$(LC_ALL=C.UTF-8 printf '%s' "${meta_value}" | LC_ALL=C.UTF-8 wc -m)"
+    if [ "${meta_length}" -gt 160 ]; then
+      echo "[WARN] ${filename}: meta_description 길이가 ${meta_length}자로 160자를 초과합니다 (검색 결과 스니펫에서 잘릴 수 있습니다)"
+    fi
+  fi
+
   # 4) 면책 문구 검사
   #    frontmatter 이후 본문에서, 이탤릭(*...*) 처리된 한 줄 중
   #    면책성 키워드(책임/투자/권장 등)를 포함한 줄이 하나라도 있는지 확인한다.
