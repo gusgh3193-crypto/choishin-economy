@@ -128,6 +128,19 @@ for filepath in "${post_files[@]}"; do
   description_escaped="$(json_escape "${meta_description}")"
   post_url="${BASE_URL}/posts/${slug}"
 
+  # author (frontmatter에 있으면 Person, 없으면 기본 Organization "최신경제")
+  author_line="$(echo "${frontmatter}" | grep -E '^author:' | head -n 1)"
+  fm_author="${author_line#author:}"
+  fm_author="$(echo "${fm_author}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')"
+  if [ -n "${fm_author}" ]; then
+    author_type="Person"
+    author_name="${fm_author}"
+  else
+    author_type="Organization"
+    author_name="최신경제"
+  fi
+  author_name_escaped="$(json_escape "${author_name}")"
+
   output_file="${JSONLD_DIR}/${slug}.json"
 
   {
@@ -139,6 +152,10 @@ for filepath in "${post_files[@]}"; do
     echo "  \"datePublished\": \"${date_published}\","
     echo "  \"keywords\": ${keywords_json},"
     echo "  \"url\": \"${post_url}\","
+    echo "  \"author\": {"
+    echo "    \"@type\": \"${author_type}\","
+    echo "    \"name\": \"${author_name_escaped}\""
+    echo "  },"
     echo "  \"mainEntityOfPage\": {"
     echo "    \"@type\": \"WebPage\","
     echo "    \"@id\": \"${post_url}\""

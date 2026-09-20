@@ -6,6 +6,10 @@
   "datePublished": "2026-09-13",
   "keywords": ["금리 인상", "기준금리", "물가 영향", "대출이자", "경제 상식"],
   "url": "https://example.com/posts/interest-rate-impact",
+  "author": {
+    "@type": "Organization",
+    "name": "최신경제"
+  },
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://example.com/posts/interest-rate-impact"
