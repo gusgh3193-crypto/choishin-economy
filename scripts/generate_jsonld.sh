@@ -13,6 +13,7 @@
 #   - 도메인은 아직 정해지지 않았으므로 플레이스홀더(https://example.com)를
 #     사용하고, 실제 도메인으로 교체해야 함을 명시한다.
 #     # TODO: 실제 도메인으로 교체 필요
+#     # TODO: 로고 준비되면 publisher.logo 추가 필요
 #
 # 사용법:
 #   bash scripts/generate_jsonld.sh
@@ -155,6 +156,10 @@ for filepath in "${post_files[@]}"; do
     echo "  \"author\": {"
     echo "    \"@type\": \"${author_type}\","
     echo "    \"name\": \"${author_name_escaped}\""
+    echo "  },"
+    echo "  \"publisher\": {"
+    echo "    \"@type\": \"Organization\","
+    echo "    \"name\": \"최신경제\""
     echo "  },"
     echo "  \"mainEntityOfPage\": {"
     echo "    \"@type\": \"WebPage\","

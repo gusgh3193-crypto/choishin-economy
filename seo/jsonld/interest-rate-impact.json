@@ -10,6 +10,10 @@
     "@type": "Organization",
     "name": "최신경제"
   },
+  "publisher": {
+    "@type": "Organization",
+    "name": "최신경제"
+  },
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://example.com/posts/interest-rate-impact"
