@@ -8,11 +8,13 @@
 #   3) generate_jsonld.sh  - 글별 JSON-LD(구조화 데이터) 생성
 #   4) JSON-LD 유효성 검증 - 3)에서 생성된 seo/jsonld/*.json 각각이
 #      실제로 파싱 가능한 유효한 JSON인지 검증(python3 json 모듈 사용)
+#   5) sitemap.xml 유효성 검증 - 2)에서 생성된 seo/sitemap.xml이
+#      실제로 파싱 가능한 well-formed XML인지 검증(python3 xml.etree.ElementTree 사용)
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
-# 4번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 세 스크립트를
-# 건드리지 않는다.
+# 4번째, 5번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 세
+# 스크립트를 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -29,32 +31,33 @@ VALIDATE_SCRIPT="${SCRIPT_DIR}/validate_posts.sh"
 SITEMAP_SCRIPT="${SCRIPT_DIR}/generate_sitemap.sh"
 JSONLD_SCRIPT="${SCRIPT_DIR}/generate_jsonld.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
+SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 
 overall_status=0
 
 echo "=========================================="
-echo "[1/4] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/5] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/4] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/5] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/4] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/5] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/4] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/5] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -84,7 +87,29 @@ else
   fi
 fi
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[5/5] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "=========================================="
+sitemap_validate_status=0
+if [ ! -f "${SITEMAP_FILE}" ]; then
+  echo "경고: ${SITEMAP_FILE} 파일을 찾을 수 없어 유효성 검증을 건너뜁니다."
+elif ! command -v python3 >/dev/null 2>&1; then
+  echo "오류: python3 명령을 찾을 수 없어 sitemap.xml 유효성을 검증할 수 없습니다."
+  sitemap_validate_status=1
+else
+  sitemap_filename="$(basename "${SITEMAP_FILE}")"
+  xml_error="$(python3 -c "import xml.etree.ElementTree as ET, sys; ET.parse(sys.argv[1])" "${SITEMAP_FILE}" 2>&1 1>/dev/null)"
+  if [ $? -eq 0 ]; then
+    echo "[PASS] ${sitemap_filename}"
+  else
+    sitemap_validate_status=1
+    echo "[FAIL] ${sitemap_filename}"
+    echo "        - 유효한 XML이 아닙니다: ${xml_error}"
+  fi
+fi
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -104,6 +129,7 @@ echo "1) 글 규칙 검증 (validate_posts.sh)     : $(status_label ${validate_s
 echo "2) sitemap/robots 생성 (generate_sitemap.sh) : $(status_label ${sitemap_status})"
 echo "3) JSON-LD 생성 (generate_jsonld.sh)     : $(status_label ${jsonld_status})"
 echo "4) JSON-LD 유효성 검증 (seo/jsonld/*.json) : $(status_label ${jsonld_validate_status})"
+echo "5) sitemap.xml 유효성 검증 (seo/sitemap.xml) : $(status_label ${sitemap_validate_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
