@@ -10,11 +10,17 @@
 #      실제로 파싱 가능한 유효한 JSON인지 검증(python3 json 모듈 사용)
 #   5) sitemap.xml 유효성 검증 - 2)에서 생성된 seo/sitemap.xml이
 #      실제로 파싱 가능한 well-formed XML인지 검증(python3 xml.etree.ElementTree 사용)
+#   6) JSON-LD 필수 필드 검증 - 3)에서 생성된 seo/jsonld/*.json 각각이
+#      schema.org BlogPosting에 필요한 필수 필드(@context, @type, headline,
+#      description, datePublished, url, author.name, publisher.name,
+#      mainEntityOfPage.@id)를 모두 갖추고 값이 비어있지 않은지 검증
+#      (python3 json 모듈 사용). "파싱 가능한 JSON"인지만 보는 4)와 달리,
+#      실제로 필요한 필드가 채워져 있는지까지 확인한다.
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
-# 4번째, 5번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 세
-# 스크립트를 건드리지 않는다.
+# 4번째, 5번째, 6번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며,
+# 기존 세 스크립트를 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -36,28 +42,28 @@ SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 overall_status=0
 
 echo "=========================================="
-echo "[1/5] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/6] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/5] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/6] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/5] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/6] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/5] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/6] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -89,7 +95,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/5] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/6] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -109,7 +115,106 @@ else
   fi
 fi
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[6/6] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "=========================================="
+jsonld_required_fields_status=0
+if [ ! -d "${JSONLD_DIR}" ]; then
+  echo "경고: ${JSONLD_DIR} 디렉터리를 찾을 수 없어 필수 필드 검증을 건너뜁니다."
+elif ! command -v python3 >/dev/null 2>&1; then
+  echo "오류: python3 명령을 찾을 수 없어 JSON-LD 필수 필드를 검증할 수 없습니다."
+  jsonld_required_fields_status=1
+else
+  shopt -s nullglob
+  jsonld_files_for_fields=("${JSONLD_DIR}"/*.json)
+  shopt -u nullglob
+
+  if [ ${#jsonld_files_for_fields[@]} -eq 0 ]; then
+    echo "경고: ${JSONLD_DIR} 안에 검사할 .json 파일이 없습니다."
+  else
+    for jsonld_file in "${jsonld_files_for_fields[@]}"; do
+      jsonld_filename="$(basename "${jsonld_file}")"
+      field_check_output="$(python3 - "${jsonld_file}" <<'PYEOF'
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"JSON 파싱 실패: {e}")
+    sys.exit(1)
+
+def is_blank(value):
+    if value is None:
+        return True
+    if isinstance(value, str) and value.strip() == "":
+        return True
+    return False
+
+required_simple_fields = [
+    "@context",
+    "@type",
+    "headline",
+    "description",
+    "datePublished",
+    "url",
+]
+required_object_fields = {
+    "author": "name",
+    "publisher": "name",
+    "mainEntityOfPage": "@id",
+}
+
+problems = []
+
+for field in required_simple_fields:
+    if field not in data:
+        problems.append(f"{field} 필드가 없습니다")
+    elif is_blank(data[field]):
+        problems.append(f"{field} 값이 비어 있습니다")
+
+for field, subkey in required_object_fields.items():
+    if field not in data:
+        problems.append(f"{field} 필드가 없습니다")
+        continue
+    obj = data[field]
+    if not isinstance(obj, dict):
+        problems.append(f"{field} 필드가 객체가 아닙니다")
+        continue
+    if subkey not in obj:
+        problems.append(f"{field}.{subkey} 필드가 없습니다")
+    elif is_blank(obj[subkey]):
+        problems.append(f"{field}.{subkey} 값이 비어 있습니다")
+
+if problems:
+    for p in problems:
+        print(p)
+    sys.exit(1)
+
+sys.exit(0)
+PYEOF
+)"
+      field_check_status=$?
+      if [ ${field_check_status} -eq 0 ]; then
+        echo "[PASS] ${jsonld_filename}"
+      else
+        jsonld_required_fields_status=1
+        echo "[FAIL] ${jsonld_filename}"
+        while IFS= read -r problem_line; do
+          if [ -n "${problem_line}" ]; then
+            echo "        - ${problem_line}"
+          fi
+        done <<< "${field_check_output}"
+      fi
+    done
+  fi
+fi
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -130,6 +235,7 @@ echo "2) sitemap/robots 생성 (generate_sitemap.sh) : $(status_label ${sitemap_
 echo "3) JSON-LD 생성 (generate_jsonld.sh)     : $(status_label ${jsonld_status})"
 echo "4) JSON-LD 유효성 검증 (seo/jsonld/*.json) : $(status_label ${jsonld_validate_status})"
 echo "5) sitemap.xml 유효성 검증 (seo/sitemap.xml) : $(status_label ${sitemap_validate_status})"
+echo "6) JSON-LD 필수 필드 검증 (seo/jsonld/*.json) : $(status_label ${jsonld_required_fields_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
