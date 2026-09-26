@@ -1,0 +1,125 @@
+/* 배포용이 아닌 로컬 참고용 공용 스타일시트 — mockup 파일들이 공유해서 쓰는 CSS */
+  /* design/color-palette.md 1번 팔레트 요약 표의 hex 값을 그대로 사용 */
+  :root {
+    --color-bg: #FFFFFF;
+    --color-text: #333333;
+    --color-heading: #1A1A1A;
+    --color-link: #0B5FA5;
+    --color-link-visited: #6A4C93;
+    --color-warning-bg: #FFF3E0;
+    --color-warning-text: #6B3E00;
+    --color-table-header-bg: #F0F0F0;
+    --color-table-header-text: #333333;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* style-guide.md 8번: 폰트 크기는 rem 단위 사용, 확대해도 레이아웃 유지 */
+    font-size: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    /* style-guide.md 2번: 본문 줄 간격 1.7~1.8배 권장 */
+    line-height: 1.75;
+    /* style-guide.md 7번: 본문 폰트 크기 모바일 기준 최소 16px(1rem) */
+    font-size: 1rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    /* style-guide.md 7번: 단락 좌우 여백 모바일 최소 16px 이상 */
+    padding: 32px 16px 64px;
+  }
+
+  h1, h2 {
+    color: var(--color-heading);
+    line-height: 1.4;
+  }
+
+  h1 {
+    /* style-guide.md 8번: H1은 본문 대비 1.8~2배 수준 */
+    font-size: 2rem;
+    margin: 0 0 24px;
+  }
+
+  h2 {
+    /* style-guide.md 8번: H2는 본문 대비 1.3~1.5배 수준 */
+    font-size: 1.4rem;
+    margin: 40px 0 12px;
+  }
+
+  p {
+    margin: 0 0 20px;
+  }
+
+  ul {
+    margin: 0 0 20px;
+    padding-left: 1.25rem;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  a {
+    color: var(--color-link);
+    /* style-guide.md 8번: 링크는 색상뿐 아니라 밑줄 등 비색상 단서 병행 */
+    text-decoration: underline;
+  }
+
+  a:visited {
+    color: var(--color-link-visited);
+  }
+
+  /* style-guide.md 7번: 표는 overflow-x: auto 래퍼로 감싸 가로 스크롤 대응 */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 0 0 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    /* style-guide.md 3번: 표는 2열 유지 */
+  }
+
+  caption {
+    text-align: left;
+    color: var(--color-text);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid #DDDDDD;
+    /* style-guide.md 7번: 표 셀 텍스트 줄바꿈 강제 금지 */
+    white-space: normal;
+  }
+
+  th {
+    background-color: var(--color-table-header-bg);
+    color: var(--color-table-header-text);
+    font-weight: bold;
+  }
+
+  /* style-guide.md 5번/8번, color-palette.md 1번·2-2번: 면책 문구는 시각적으로 분리된 박스 */
+  .disclaimer {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 40px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
