@@ -57,6 +57,15 @@
     margin: 40px 0 12px;
   }
 
+  h3 {
+    /* style-guide.md 1번: H3는 H2 섹션 내부 하위 항목이 2개 이상일 때만 사용 */
+    /* style-guide.md 8번: 본문(1rem)보다 크고 H2(1.4rem)보다 작게, 본문 대비 약 1.15배 수준 */
+    color: var(--color-heading);
+    line-height: 1.4;
+    font-size: 1.15rem;
+    margin: 24px 0 8px;
+  }
+
   p {
     margin: 0 0 20px;
   }

@@ -24,7 +24,7 @@ POSTS_DIR="${REPO_ROOT}/posts"
 FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$'
 REQUIRED_FIELDS=(title meta_description keywords)
 # 면책 문구로 인정할 키워드 (이탤릭 처리된 한 줄 안에 하나 이상 포함되어야 함)
-DISCLAIMER_KEYWORDS=(책임 투자 권장)
+DISCLAIMER_KEYWORDS=(책임 투자 권장 대출)
 
 overall_status=0
 file_count=0
