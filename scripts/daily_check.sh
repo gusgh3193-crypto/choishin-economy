@@ -10,14 +10,38 @@
 #      실제로 파싱 가능한 유효한 JSON인지 검증(python3 json 모듈 사용)
 #   5) sitemap.xml 유효성 검증 - 2)에서 생성된 seo/sitemap.xml이
 #      실제로 파싱 가능한 well-formed XML인지 검증(python3 xml.etree.ElementTree 사용)
-#   6) robots.txt 기본 유효성 검증 - 2)에서 생성된 seo/robots.txt가
-#      존재/비어있지 않음, User-agent: 줄 존재, Sitemap: 줄 존재 및 그 URL이
-#      /sitemap.xml로 끝나는지 검증
+#   6) JSON-LD 필수 필드 검증 - 3)에서 생성된 seo/jsonld/*.json 각각이
+#      schema.org BlogPosting에 필요한 필수 필드(@context, @type, headline,
+#      description, datePublished, url, author.name, publisher.name,
+#      mainEntityOfPage.@id)를 모두 갖추고 값이 비어있지 않은지 검증
+#      (python3 json 모듈 사용). "파싱 가능한 JSON"인지만 보는 4)와 달리,
+#      실제로 필요한 필드가 채워져 있는지까지 확인한다.
+#   7) 도메인 일관성 검증 - seo/sitemap.xml의 모든 <loc> 값과
+#      seo/jsonld/*.json 각각의 url, mainEntityOfPage.@id 값, 그리고
+#      seo/robots.txt의 "Sitemap: " 줄에 적힌 URL에서 스킴+호스트(예:
+#      https://example.com) 부분만 추출해, 이 값들이 전부 하나의 동일한
+#      도메인인지 검증한다(python3 xml.etree.ElementTree, json,
+#      urllib.parse.urlsplit 사용). generate_sitemap.sh와 generate_jsonld.sh는
+#      각각 BASE_URL을 독립적으로 하드코딩하고 있고 robots.txt도 별도로
+#      수정될 수 있어, 어느 한쪽만 바꾸고 나머지를 깜빡하는 실수를 잡아내기
+#      위한 단계다.
+#   8) posts ↔ sitemap 글 목록 일치 검증 - posts/ 디렉터리의 실제 글
+#      파일명(YYYY-MM-DD-슬러그.md)에서 추출한 슬러그 목록과, seo/sitemap.xml의
+#      <loc>{BASE_URL}/posts/{슬러그}</loc> 항목(홈페이지 <loc> 제외)에서
+#      추출한 슬러그 목록이 1:1로 일치하는지 검증한다(python3
+#      xml.etree.ElementTree, re 사용). posts/에는 있는데 sitemap에 없거나,
+#      sitemap에는 있는데 posts/에 없는 슬러그가 하나라도 있으면 실패 처리한다.
+#   9) robots.txt 기본 구조 검증 - seo/robots.txt가 (a) 비어있지 않고
+#      (b) "User-agent:"로 시작하는 줄을 포함하고 (c) "Sitemap:"으로 시작하는
+#      줄을 포함하며 (d) 그 Sitemap 줄의 URL이 "/sitemap.xml"로 끝나는지
+#      확인한다. 7)의 도메인 일관성 검증은 robots.txt의 Sitemap 줄에서
+#      스킴+호스트만 비교하고 User-agent 줄 존재 여부는 보지 않으므로,
+#      robots.txt 자체의 기본 구조가 깨졌는지는 이 단계에서 별도로 확인한다.
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
-# 4번째, 5번째, 6번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존
-# 세 스크립트를 건드리지 않는다.
+# 4번째, 5번째, 6번째, 7번째, 8번째, 9번째 검증 단계는 daily_check.sh 자체에 추가된
+# 로직이며, 기존 세 스크립트를 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -35,33 +59,33 @@ SITEMAP_SCRIPT="${SCRIPT_DIR}/generate_sitemap.sh"
 JSONLD_SCRIPT="${SCRIPT_DIR}/generate_jsonld.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
 SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
-ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
+POSTS_DIR="${REPO_ROOT}/posts"
 
 overall_status=0
 
 echo "=========================================="
-echo "[1/6] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/9] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/6] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/9] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/6] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/9] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/6] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/9] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -93,7 +117,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/6] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/9] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -115,7 +139,317 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[6/6] robots.txt 유효성 검증을 실행합니다: seo/robots.txt"
+echo "[6/9] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "=========================================="
+jsonld_required_fields_status=0
+if [ ! -d "${JSONLD_DIR}" ]; then
+  echo "경고: ${JSONLD_DIR} 디렉터리를 찾을 수 없어 필수 필드 검증을 건너뜁니다."
+elif ! command -v python3 >/dev/null 2>&1; then
+  echo "오류: python3 명령을 찾을 수 없어 JSON-LD 필수 필드를 검증할 수 없습니다."
+  jsonld_required_fields_status=1
+else
+  shopt -s nullglob
+  jsonld_files_for_fields=("${JSONLD_DIR}"/*.json)
+  shopt -u nullglob
+
+  if [ ${#jsonld_files_for_fields[@]} -eq 0 ]; then
+    echo "경고: ${JSONLD_DIR} 안에 검사할 .json 파일이 없습니다."
+  else
+    for jsonld_file in "${jsonld_files_for_fields[@]}"; do
+      jsonld_filename="$(basename "${jsonld_file}")"
+      field_check_output="$(python3 - "${jsonld_file}" <<'PYEOF'
+import json
+import sys
+
+path = sys.argv[1]
+
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"JSON 파싱 실패: {e}")
+    sys.exit(1)
+
+def is_blank(value):
+    if value is None:
+        return True
+    if isinstance(value, str) and value.strip() == "":
+        return True
+    return False
+
+required_simple_fields = [
+    "@context",
+    "@type",
+    "headline",
+    "description",
+    "datePublished",
+    "url",
+]
+required_object_fields = {
+    "author": "name",
+    "publisher": "name",
+    "mainEntityOfPage": "@id",
+}
+
+problems = []
+
+for field in required_simple_fields:
+    if field not in data:
+        problems.append(f"{field} 필드가 없습니다")
+    elif is_blank(data[field]):
+        problems.append(f"{field} 값이 비어 있습니다")
+
+for field, subkey in required_object_fields.items():
+    if field not in data:
+        problems.append(f"{field} 필드가 없습니다")
+        continue
+    obj = data[field]
+    if not isinstance(obj, dict):
+        problems.append(f"{field} 필드가 객체가 아닙니다")
+        continue
+    if subkey not in obj:
+        problems.append(f"{field}.{subkey} 필드가 없습니다")
+    elif is_blank(obj[subkey]):
+        problems.append(f"{field}.{subkey} 값이 비어 있습니다")
+
+if problems:
+    for p in problems:
+        print(p)
+    sys.exit(1)
+
+sys.exit(0)
+PYEOF
+)"
+      field_check_status=$?
+      if [ ${field_check_status} -eq 0 ]; then
+        echo "[PASS] ${jsonld_filename}"
+      else
+        jsonld_required_fields_status=1
+        echo "[FAIL] ${jsonld_filename}"
+        while IFS= read -r problem_line; do
+          if [ -n "${problem_line}" ]; then
+            echo "        - ${problem_line}"
+          fi
+        done <<< "${field_check_output}"
+      fi
+    done
+  fi
+fi
+
+echo ""
+echo "=========================================="
+echo "[7/9] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
+echo "=========================================="
+domain_consistency_status=0
+ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
+if [ ! -f "${SITEMAP_FILE}" ]; then
+  echo "경고: ${SITEMAP_FILE} 파일을 찾을 수 없어 도메인 일관성 검증을 건너뜁니다."
+elif [ ! -d "${JSONLD_DIR}" ]; then
+  echo "경고: ${JSONLD_DIR} 디렉터리를 찾을 수 없어 도메인 일관성 검증을 건너뜁니다."
+elif [ ! -f "${ROBOTS_FILE}" ]; then
+  echo "경고: ${ROBOTS_FILE} 파일을 찾을 수 없어 도메인 일관성 검증을 건너뜁니다."
+elif ! command -v python3 >/dev/null 2>&1; then
+  echo "오류: python3 명령을 찾을 수 없어 도메인 일관성을 검증할 수 없습니다."
+  domain_consistency_status=1
+else
+  shopt -s nullglob
+  jsonld_files_for_domain=("${JSONLD_DIR}"/*.json)
+  shopt -u nullglob
+
+  if [ ${#jsonld_files_for_domain[@]} -eq 0 ]; then
+    echo "경고: ${JSONLD_DIR} 안에 검사할 .json 파일이 없습니다."
+  else
+    domain_check_output="$(python3 - "${SITEMAP_FILE}" "${ROBOTS_FILE}" "${jsonld_files_for_domain[@]}" <<'PYEOF'
+import json
+import sys
+import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
+
+sitemap_path = sys.argv[1]
+robots_path = sys.argv[2]
+jsonld_paths = sys.argv[3:]
+
+# domain(scheme+netloc) -> [출처 설명, ...]
+domains = {}
+
+def add_domain(url, source):
+    if url is None:
+        return
+    url = str(url).strip()
+    if url == "":
+        return
+    parts = urlsplit(url)
+    domain = f"{parts.scheme}://{parts.netloc}"
+    domains.setdefault(domain, []).append(source)
+
+try:
+    tree = ET.parse(sitemap_path)
+    root = tree.getroot()
+except Exception as e:
+    print(f"sitemap.xml 파싱 실패: {e}")
+    sys.exit(1)
+
+for elem in root.iter():
+    local_tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+    if local_tag == "loc":
+        add_domain(elem.text, f"sitemap.xml <loc>{elem.text}</loc>")
+
+try:
+    with open(robots_path, "r", encoding="utf-8") as f:
+        robots_lines = f.readlines()
+except Exception as e:
+    print(f"robots.txt 파싱 실패: {e}")
+    sys.exit(1)
+
+for line in robots_lines:
+    stripped = line.strip()
+    if stripped.startswith("Sitemap:"):
+        sitemap_url = stripped[len("Sitemap:"):].strip()
+        add_domain(sitemap_url, f"robots.txt \"{stripped}\"")
+
+for jsonld_path in jsonld_paths:
+    filename = jsonld_path.rsplit("/", 1)[-1]
+    try:
+        with open(jsonld_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"{filename} 파싱 실패: {e}")
+        sys.exit(1)
+
+    if "url" in data:
+        add_domain(data.get("url"), f"{filename} url={data.get('url')}")
+
+    main_entity = data.get("mainEntityOfPage")
+    if isinstance(main_entity, dict) and "@id" in main_entity:
+        add_domain(
+            main_entity.get("@id"),
+            f"{filename} mainEntityOfPage.@id={main_entity.get('@id')}",
+        )
+
+if len(domains) <= 1:
+    if domains:
+        (only_domain,) = domains.keys()
+        print(f"도메인: {only_domain}")
+    sys.exit(0)
+
+for domain, sources in domains.items():
+    print(f"도메인 {domain}:")
+    for source in sources:
+        print(f"  {source}")
+sys.exit(1)
+PYEOF
+)"
+    domain_check_status=$?
+    if [ ${domain_check_status} -eq 0 ]; then
+      echo "[PASS] seo/sitemap.xml, seo/jsonld/*.json, seo/robots.txt 모두 동일한 도메인을 사용합니다."
+      if [ -n "${domain_check_output}" ]; then
+        echo "        - ${domain_check_output}"
+      fi
+    else
+      domain_consistency_status=1
+      echo "[FAIL] seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt 도메인이 서로 다릅니다."
+      while IFS= read -r problem_line; do
+        if [ -n "${problem_line}" ]; then
+          echo "        - ${problem_line}"
+        fi
+      done <<< "${domain_check_output}"
+    fi
+  fi
+fi
+
+echo ""
+echo "=========================================="
+echo "[8/9] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
+echo "=========================================="
+posts_sitemap_status=0
+if [ ! -d "${POSTS_DIR}" ]; then
+  echo "경고: ${POSTS_DIR} 디렉터리를 찾을 수 없어 posts ↔ sitemap 일치 검증을 건너뜁니다."
+elif [ ! -f "${SITEMAP_FILE}" ]; then
+  echo "경고: ${SITEMAP_FILE} 파일을 찾을 수 없어 posts ↔ sitemap 일치 검증을 건너뜁니다."
+elif ! command -v python3 >/dev/null 2>&1; then
+  echo "오류: python3 명령을 찾을 수 없어 posts ↔ sitemap 일치를 검증할 수 없습니다."
+  posts_sitemap_status=1
+else
+  shopt -s nullglob
+  post_files_for_sitemap=("${POSTS_DIR}"/*.md)
+  shopt -u nullglob
+
+  posts_sitemap_check_output="$(python3 - "${SITEMAP_FILE}" "${post_files_for_sitemap[@]}" <<'PYEOF'
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+sitemap_path = sys.argv[1]
+post_paths = sys.argv[2:]
+
+# posts/ 실제 파일명(YYYY-MM-DD-슬러그.md)에서 슬러그 추출
+post_slugs = set()
+filename_re = re.compile(r'^\d{4}-\d{2}-\d{2}-(.+)\.md$')
+for post_path in post_paths:
+    filename = post_path.rsplit("/", 1)[-1]
+    m = filename_re.match(filename)
+    if m:
+        post_slugs.add(m.group(1))
+
+# seo/sitemap.xml <loc> 값 중 /posts/{슬러그} 패턴에서 슬러그 추출
+# (홈페이지 <loc>https://example.com/</loc> 항목은 자동으로 제외됨)
+try:
+    tree = ET.parse(sitemap_path)
+    root = tree.getroot()
+except Exception as e:
+    print(f"sitemap.xml 파싱 실패: {e}")
+    sys.exit(1)
+
+sitemap_slugs = set()
+loc_re = re.compile(r'^.*/posts/([^/]+)$')
+for elem in root.iter():
+    local_tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+    if local_tag == "loc" and elem.text:
+        text = elem.text.strip()
+        m = loc_re.match(text)
+        if m:
+            sitemap_slugs.add(m.group(1))
+
+missing_in_sitemap = sorted(post_slugs - sitemap_slugs)
+missing_in_posts = sorted(sitemap_slugs - post_slugs)
+
+if not missing_in_sitemap and not missing_in_posts:
+    print(f"일치: posts/ {len(post_slugs)}건 = sitemap.xml {len(sitemap_slugs)}건")
+    sys.exit(0)
+
+if missing_in_sitemap:
+    print("posts/에는 있지만 sitemap.xml에는 없는 슬러그:")
+    for slug in missing_in_sitemap:
+        print(f"  - {slug}")
+
+if missing_in_posts:
+    print("sitemap.xml에는 있지만 posts/에는 없는 슬러그:")
+    for slug in missing_in_posts:
+        print(f"  - {slug}")
+
+sys.exit(1)
+PYEOF
+)"
+  posts_sitemap_check_status=$?
+  if [ ${posts_sitemap_check_status} -eq 0 ]; then
+    echo "[PASS] posts/ ↔ seo/sitemap.xml"
+    if [ -n "${posts_sitemap_check_output}" ]; then
+      echo "        - ${posts_sitemap_check_output}"
+    fi
+  else
+    posts_sitemap_status=1
+    echo "[FAIL] posts/ ↔ seo/sitemap.xml 글 목록이 일치하지 않습니다."
+    while IFS= read -r problem_line; do
+      if [ -n "${problem_line}" ]; then
+        echo "        - ${problem_line}"
+      fi
+    done <<< "${posts_sitemap_check_output}"
+  fi
+fi
+
+echo ""
+echo "=========================================="
+echo "[9/9] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
 echo "=========================================="
 robots_validate_status=0
 if [ ! -f "${ROBOTS_FILE}" ]; then
@@ -156,7 +490,7 @@ else
   fi
 fi
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ]; then
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -177,7 +511,10 @@ echo "2) sitemap/robots 생성 (generate_sitemap.sh) : $(status_label ${sitemap_
 echo "3) JSON-LD 생성 (generate_jsonld.sh)     : $(status_label ${jsonld_status})"
 echo "4) JSON-LD 유효성 검증 (seo/jsonld/*.json) : $(status_label ${jsonld_validate_status})"
 echo "5) sitemap.xml 유효성 검증 (seo/sitemap.xml) : $(status_label ${sitemap_validate_status})"
-echo "6) robots.txt 유효성 검증 (seo/robots.txt) : $(status_label ${robots_validate_status})"
+echo "6) JSON-LD 필수 필드 검증 (seo/jsonld/*.json) : $(status_label ${jsonld_required_fields_status})"
+echo "7) 도메인 일관성 검증 (sitemap.xml ↔ jsonld/*.json ↔ robots.txt) : $(status_label ${domain_consistency_status})"
+echo "8) posts ↔ sitemap 글 목록 일치 검증 (posts/ ↔ sitemap.xml) : $(status_label ${posts_sitemap_status})"
+echo "9) robots.txt 기본 구조 검증 (seo/robots.txt) : $(status_label ${robots_validate_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
