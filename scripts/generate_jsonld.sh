@@ -88,6 +88,12 @@ for filepath in "${post_files[@]}"; do
   fm_date="$(echo "${fm_date}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')"
   date_published="${fm_date:-${filename_date}}"
 
+  # updated (frontmatter에 있으면 dateModified로 사용, 없으면 datePublished와 동일)
+  updated_line="$(echo "${frontmatter}" | grep -E '^updated:' | head -n 1)"
+  fm_updated="${updated_line#updated:}"
+  fm_updated="$(echo "${fm_updated}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')"
+  date_modified="${fm_updated:-${date_published}}"
+
   # keywords (예: keywords: ["금리 인상", "기준금리"])
   keywords_line="$(echo "${frontmatter}" | grep -E '^keywords:' | head -n 1)"
   keywords_raw="${keywords_line#keywords:}"
@@ -151,6 +157,7 @@ for filepath in "${post_files[@]}"; do
     echo "  \"headline\": \"${headline_escaped}\","
     echo "  \"description\": \"${description_escaped}\","
     echo "  \"datePublished\": \"${date_published}\","
+    echo "  \"dateModified\": \"${date_modified}\","
     echo "  \"keywords\": ${keywords_json},"
     echo "  \"url\": \"${post_url}\","
     echo "  \"author\": {"
