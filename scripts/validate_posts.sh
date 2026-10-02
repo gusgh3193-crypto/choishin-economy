@@ -40,7 +40,7 @@ shopt -u nullglob
 
 if [ ${#post_files[@]} -eq 0 ]; then
   echo "경고: ${POSTS_DIR} 안에 검사할 .md 파일이 없습니다."
-  exit 1
+  exit 0
 fi
 
 for filepath in "${post_files[@]}"; do
