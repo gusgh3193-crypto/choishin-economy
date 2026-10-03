@@ -89,6 +89,23 @@ for filepath in "${post_files[@]}"; do
     fi
   fi
 
+  # 3-2) frontmatter의 date 필드가 파일명의 날짜와 일치하는지 검사
+  #      generate_sitemap.sh/generate_jsonld.sh는 frontmatter에 date가 있으면 그 값을
+  #      lastmod/datePublished로 우선 사용하므로, 파일명 날짜와 다르면 틀린 날짜가 그대로
+  #      SEO 산출물에 반영된다. frontmatter에 date 필드가 있을 때만 검사하며, 다르면 FAIL 처리한다.
+  date_line="$(echo "${frontmatter}" | sed -n -E '/^date:[[:space:]]*.+/{s/^date:[[:space:]]*//;p;q}')"
+  if [ -n "${date_line}" ]; then
+    if [[ "${date_line}" =~ ^\"?([0-9]{4}-[0-9]{2}-[0-9]{2})\"? ]]; then
+      frontmatter_date="${BASH_REMATCH[1]}"
+      if [[ "${filename}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})- ]]; then
+        filename_date="${BASH_REMATCH[1]}"
+        if [ "${frontmatter_date}" != "${filename_date}" ]; then
+          file_problems+=("frontmatter의 date(${frontmatter_date})가 파일명의 날짜(${filename_date})와 다릅니다")
+        fi
+      fi
+    fi
+  fi
+
   # 4) 면책 문구 검사
   #    frontmatter 이후 본문에서, 이탤릭(*...*) 처리된 한 줄 중
   #    면책성 키워드(책임/투자/권장 등)를 포함한 줄이 하나라도 있는지 확인한다.
