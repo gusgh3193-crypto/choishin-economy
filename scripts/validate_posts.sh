@@ -71,6 +71,19 @@ for filepath in "${post_files[@]}"; do
     done
   fi
 
+  # 3-3) keywords 필드가 배열 형식([...])일 때, 그 안에 실제 항목이 있는지 검사
+  #      "keywords: []"처럼 필드 자체는 존재하지만 대괄호 안이 공백뿐이면(빈 배열)
+  #      SEO용 키워드가 0개인 것이므로 FAIL 처리한다. 배열 형식이 아닌 경우(단순 텍스트/
+  #      콤마 구분 문자열 등)는 이 검사를 적용하지 않는다.
+  keywords_line="$(echo "${frontmatter}" | sed -n -E '/^keywords:[[:space:]]*.+/{s/^keywords:[[:space:]]*//;p;q}')"
+  if [[ "${keywords_line}" =~ ^\[(.*)\][[:space:]]*$ ]]; then
+    keywords_inner="${BASH_REMATCH[1]}"
+    keywords_trimmed="$(echo "${keywords_inner}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    if [ -z "${keywords_trimmed}" ]; then
+      file_problems+=("frontmatter의 keywords 배열이 비어 있습니다")
+    fi
+  fi
+
   # 3-1) meta_description 길이 검사 (SEO 권장: 약 160자 전후에서 스니펫이 잘림)
   #      이 검사는 CLAUDE.md가 정한 규칙이 아니므로 절대 FAIL 처리하지 않는다.
   #      file_problems/overall_status에 반영하지 않고 별도의 [WARN] 메시지로만 안내한다.
