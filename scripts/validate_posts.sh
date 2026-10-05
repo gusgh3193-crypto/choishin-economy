@@ -84,6 +84,21 @@ for filepath in "${post_files[@]}"; do
     fi
   fi
 
+  # 3-4) title, meta_description 필드가 따옴표로는 감싸여 있지만 그 안이
+  #      빈 문자열("")이거나 공백만("   ")인 경우를 검사한다.
+  #      기존 3번 검사(^${field}:[[:space:]]*.+)는 콜론 뒤에 따옴표 2개만
+  #      있어도 "문자가 있다"고 판단해 PASS 처리해버리므로, 그 공백을 메운다.
+  for field in title meta_description; do
+    field_line="$(echo "${frontmatter}" | sed -n -E "/^${field}:[[:space:]]*.+/{s/^${field}:[[:space:]]*//;p;q}")"
+    if [[ "${field_line}" =~ ^\"(.*)\"[[:space:]]*$ ]]; then
+      field_value="${BASH_REMATCH[1]}"
+      field_trimmed="$(echo "${field_value}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+      if [ -z "${field_trimmed}" ]; then
+        file_problems+=("frontmatter의 ${field}가 비어 있습니다 (따옴표 안 값이 비어있거나 공백뿐)")
+      fi
+    fi
+  done
+
   # 3-1) meta_description 길이 검사 (SEO 권장: 약 160자 전후에서 스니펫이 잘림)
   #      이 검사는 CLAUDE.md가 정한 규칙이 아니므로 절대 FAIL 처리하지 않는다.
   #      file_problems/overall_status에 반영하지 않고 별도의 [WARN] 메시지로만 안내한다.

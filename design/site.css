@@ -94,6 +94,16 @@
     text-decoration: underline;
   }
 
+  /* style-guide.md 8번: 키보드 포커스 표시(WCAG 2.4.7). 브라우저 기본 아웃라인은
+     브라우저마다 다르고 CSS 리셋으로 제거되기도 하므로 명시적으로 정의한다.
+     새 색을 만들지 않고 color-palette.md 1번·2-2번에서 이미 4.5:1 이상(6.57:1)
+     검증된 --color-link(#0B5FA5)를 그대로 재사용한다. 두께는 2px, offset 2px로
+     밑줄과 겹치지 않게 분리해 포커스 영역이 뚜렷이 보이도록 했다. */
+  a:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
   a:visited {
     color: var(--color-link-visited);
   }
