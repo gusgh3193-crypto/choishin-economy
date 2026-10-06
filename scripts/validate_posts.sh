@@ -25,6 +25,10 @@ FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$'
 REQUIRED_FIELDS=(title meta_description keywords)
 # 면책 문구로 인정할 키워드 (이탤릭 처리된 한 줄 안에 하나 이상 포함되어야 함)
 DISCLAIMER_KEYWORDS=(책임 투자 권장 대출)
+# keywords 배열 항목이 따옴표로 감싸여 있는지 검사할 때 쓰는 정규식
+# (쌍따옴표/홑따옴표 중 하나로 처음과 끝이 감싸여 있으면 통과)
+KEYWORDS_ITEM_DOUBLE_QUOTED_REGEX='^"[^"]*"$'
+KEYWORDS_ITEM_SINGLE_QUOTED_REGEX="^'[^']*'$"
 
 overall_status=0
 file_count=0
@@ -81,6 +85,28 @@ for filepath in "${post_files[@]}"; do
     keywords_trimmed="$(echo "${keywords_inner}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
     if [ -z "${keywords_trimmed}" ]; then
       file_problems+=("frontmatter의 keywords 배열이 비어 있습니다")
+    fi
+  fi
+
+  # 3-5) keywords가 배열 형식([...])일 때, 그 안의 각 항목이 따옴표(쌍따옴표
+  #      또는 홑따옴표)로 감싸여 있는지 검사한다. 예) keywords: [금리 인상, 기준금리]
+  #      처럼 항목에 따옴표가 없으면 generate_jsonld.sh가 그 값을 그대로 JSON
+  #      배열 원소 자리에 넣어 유효하지 않은 JSON(JSONDecodeError)을 만들어내므로,
+  #      입구(validate_posts.sh)에서 미리 FAIL 처리한다. 배열 형식이 아닌 콤마
+  #      구분 문자열(예: keywords: 금리, 기준금리)에는 적용하지 않는다
+  #      (3-3과 동일하게 keywords_line이 ^\[(.*)\]...$ 에 매칭된 경우에만 검사).
+  if [[ "${keywords_line}" =~ ^\[(.*)\][[:space:]]*$ ]] && [ -n "${keywords_trimmed}" ]; then
+    keywords_unquoted_found=0
+    IFS=',' read -ra keywords_items <<< "${keywords_trimmed}"
+    for kw_item in "${keywords_items[@]}"; do
+      kw_item_trimmed="$(echo "${kw_item}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+      [ -z "${kw_item_trimmed}" ] && continue
+      if [[ ! "${kw_item_trimmed}" =~ ${KEYWORDS_ITEM_DOUBLE_QUOTED_REGEX} ]] && [[ ! "${kw_item_trimmed}" =~ ${KEYWORDS_ITEM_SINGLE_QUOTED_REGEX} ]]; then
+        keywords_unquoted_found=1
+      fi
+    done
+    if [ ${keywords_unquoted_found} -eq 1 ]; then
+      file_problems+=("frontmatter의 keywords 배열 항목에 따옴표가 없습니다 (예: [금리 인상] → [\"금리 인상\"])")
     fi
   fi
 
