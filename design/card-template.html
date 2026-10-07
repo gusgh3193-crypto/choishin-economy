@@ -1,0 +1,197 @@
+<!-- 이 파일은 배포용이 아니라 마케팅팀 스크립트가 준비되면 교체할 기본 틀 시안입니다.
+     실제 발행/배포하지 않습니다.
+     용도: design-team.md 업무 3번(카드뉴스 시안)을 위해, 아직 마케팅팀의 실제 카드뉴스
+     스크립트(문구)가 없는 시점에 미리 준비해두는 재사용 가능한 템플릿입니다.
+     색상/폰트는 design/site.css의 기존 CSS 변수와 style-guide.md 톤을 그대로 재사용했고,
+     새로운 색상을 추가하지 않았습니다. 제목/본문 자리는 모두 "[...]" 형태의 플레이스홀더이며
+     실제 경제 정보처럼 보이는 가짜 문구를 넣지 않았습니다.
+     자세한 사용법은 design/card-template-guide.md 참고. -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[카드뉴스 템플릿 시안 — 배포용 아님]</title>
+<link rel="stylesheet" href="site.css">
+<style>
+  /* site.css의 색상 변수(--color-bg, --color-text, --color-heading, --color-link,
+     --color-warning-bg, --color-warning-text)를 그대로 재사용한다. 새 색상 변수는
+     추가하지 않았다. */
+
+  body {
+    /* site.css의 body 기본값(폰트, line-height 등)은 그대로 두고, 이 미리보기
+     페이지에서는 카드를 가운데 정렬해서 보여주기 위한 레이아웃만 추가한다. */
+    padding: 32px 16px 64px;
+  }
+
+  .preview-note {
+    max-width: 1100px;
+    margin: 0 auto 32px;
+    padding: 16px;
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .card-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-slot-label {
+    color: var(--color-text);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* === 카드뉴스 카드 본체 ===
+     실제 내보내기(export) 기준 크기는 1080x1080px(정방형) / 1080x1350px(4:5)이지만,
+     화면 미리보기에서는 뷰포트에 맞춰 축소 표시하기 위해 vmin 기반 반응형 박스로 만든다.
+     마케팅/디자인 담당자가 실제 이미지로 내보낼 때는 이 비율을 유지한 채
+     1080px 기준(또는 2x인 2160px)으로 캡처/렌더링하면 된다. */
+  .card {
+    width: min(90vw, 440px);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6%;
+    box-sizing: border-box;
+    border: 1px solid #DDDDDD; /* site.css의 표 테두리와 동일한 중립 그레이, 카드 바깥 경계만 구분 */
+  }
+
+  .card.ratio-1-1 {
+    aspect-ratio: 1 / 1; /* 1080x1080px 기준 — 인스타그램/카카오 등에서 가장 흔한 정방형 SNS 카드 비율 */
+  }
+
+  .card.ratio-4-5 {
+    aspect-ratio: 4 / 5; /* 1080x1350px 기준 — 모바일 피드에서 세로로 더 큰 면적을 차지하는 비율 */
+  }
+
+  .card-eyebrow {
+    color: var(--color-link);
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin: 0 0 12px;
+    /* 링크가 아니라 라벨이므로 밑줄은 쓰지 않는다. 색상은 site.css의 --color-link를
+       그대로 재사용했을 뿐 실제 하이퍼링크 기능은 없다. */
+  }
+
+  .card-title {
+    color: var(--color-heading);
+    font-size: 1.6rem;
+    line-height: 1.4;
+    margin: 0 0 16px;
+  }
+
+  .card-summary {
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+
+  .card-points {
+    margin: 0 0 16px;
+    padding-left: 1.1rem;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .card-points li {
+    margin-bottom: 6px;
+  }
+
+  .card-disclaimer {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin: 0 0 16px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    color: var(--color-text);
+    font-size: 0.8rem;
+    border-top: 1px solid #DDDDDD;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<p class="preview-note">
+  이 페이지는 배포용이 아닌 카드뉴스 "기본 틀" 시안입니다. 아래 "[...]" 표시는 전부
+  마케팅팀이 실제 스크립트를 전달하면 교체할 자리이며, 지금은 어떤 실제 경제 정보도
+  담고 있지 않습니다. 정방형(1:1)과 4:5 두 가지 비율을 함께 보여줍니다.
+</p>
+
+<div class="card-gallery">
+
+  <div class="card-slot">
+    <div class="card ratio-1-1">
+      <div>
+        <p class="card-eyebrow">[시리즈/카테고리 라벨 자리 — 예: 재테크 기초]</p>
+        <h1 class="card-title">[카드뉴스 제목 자리]</h1>
+        <p class="card-summary">[핵심 요약 문구 자리 — 마케팅팀 스크립트로 교체]</p>
+        <ul class="card-points">
+          <li>[세부 포인트 1 자리]</li>
+          <li>[세부 포인트 2 자리]</li>
+          <li>[세부 포인트 3 자리 — 필요 없으면 삭제]</li>
+        </ul>
+        <p class="card-disclaimer">[투자·대출 등 금전적 판단에 영향을 줄 수 있는 내용일 경우에만 면책 문구 자리 — 불필요하면 이 블록 삭제]</p>
+      </div>
+      <div class="card-footer">
+        <span>[최신경제 워드마크/로고 자리]</span>
+        <span>[1/5]</span>
+      </div>
+    </div>
+    <p class="card-slot-label">정방형(1:1) — 실제 내보내기 기준 1080×1080px</p>
+  </div>
+
+  <div class="card-slot">
+    <div class="card ratio-4-5">
+      <div>
+        <p class="card-eyebrow">[시리즈/카테고리 라벨 자리 — 예: 재테크 기초]</p>
+        <h1 class="card-title">[카드뉴스 제목 자리]</h1>
+        <p class="card-summary">[핵심 요약 문구 자리 — 마케팅팀 스크립트로 교체]</p>
+        <ul class="card-points">
+          <li>[세부 포인트 1 자리]</li>
+          <li>[세부 포인트 2 자리]</li>
+          <li>[세부 포인트 3 자리 — 필요 없으면 삭제]</li>
+        </ul>
+        <p class="card-disclaimer">[투자·대출 등 금전적 판단에 영향을 줄 수 있는 내용일 경우에만 면책 문구 자리 — 불필요하면 이 블록 삭제]</p>
+      </div>
+      <div class="card-footer">
+        <span>[최신경제 워드마크/로고 자리]</span>
+        <span>[1/5]</span>
+      </div>
+    </div>
+    <p class="card-slot-label">4:5 — 실제 내보내기 기준 1080×1350px</p>
+  </div>
+
+</div>
+
+</body>
+</html>

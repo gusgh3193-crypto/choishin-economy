@@ -35,6 +35,20 @@ fi
 
 mkdir -p "${SEO_DIR}"
 
+# XML 특수문자를 이스케이프한다. <loc>(PCDATA)에 날 것(raw)으로 들어가는
+# & / < / > 는 well-formed XML을 깨뜨릴 수 있고, XML 주석(<!-- ... -->)
+# 안에서도 그대로 보존할 필요가 없으므로(이스케이프해도 사람이 읽는 데는
+# 문제가 없다) title/slug 모두 이 함수를 통과시킨다.
+xml_escape() {
+  local s="$1"
+  s="${s//&/&amp;}"
+  s="${s//</&lt;}"
+  s="${s//>/&gt;}"
+  s="${s//\"/&quot;}"
+  s="${s//\'/&apos;}"
+  printf '%s' "${s}"
+}
+
 shopt -s nullglob
 post_files=("${POSTS_DIR}"/*.md)
 shopt -u nullglob
@@ -114,10 +128,16 @@ for filepath in "${post_files[@]}"; do
 
   {
     if [ -n "${title}" ]; then
-      echo "  <!-- ${title} -->"
+      escaped_title="$(xml_escape "${title}")"
+      # XML 주석(<!-- ... -->) 안에는 "--" 시퀀스가 올 수 없으므로(well-formed
+      # XML 위반), title에 "--"가 포함되어 있으면 손실 없이 안전하게 치환할
+      # 보편적인 규칙이 없어 가장 안전한 방법으로 주석 생성 자체를 건너뛴다.
+      if [[ "${escaped_title}" != *"--"* ]]; then
+        echo "  <!-- ${escaped_title} -->"
+      fi
     fi
     echo "  <url>"
-    echo "    <loc>${BASE_URL}/posts/${slug}</loc>"
+    echo "    <loc>${BASE_URL}/posts/$(xml_escape "${slug}")</loc>"
     echo "    <lastmod>${lastmod}</lastmod>"
     echo "  </url>"
   } >> "${SITEMAP_FILE}"
