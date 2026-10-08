@@ -31,7 +31,8 @@
     background-color: var(--color-warning-bg);
     color: var(--color-warning-text);
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.95rem(15.2px) → 1rem(16px). 근거는
+       card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     line-height: 1.7;
   }
 
@@ -53,7 +54,8 @@
 
   .card-slot-label {
     color: var(--color-text);
-    font-size: 0.9rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.9rem(14.4px) → 1rem(16px). 근거는
+       card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     text-align: center;
   }
 
@@ -85,7 +87,9 @@
 
   .card-eyebrow {
     color: var(--color-link);
-    font-size: 0.85rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.85rem(13.6px) → 1rem(16px). 위계 구분은
+       크기 대신 font-weight(bold)·색상으로 유지한다(color-palette.md 1번 H1/H2 패턴과 동일 접근).
+       근거는 card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     font-weight: bold;
     margin: 0 0 12px;
     /* 링크가 아니라 라벨이므로 밑줄은 쓰지 않는다. 색상은 site.css의 --color-link를
@@ -110,7 +114,9 @@
     margin: 0 0 16px;
     padding-left: 1.1rem;
     color: var(--color-text);
-    font-size: 0.95rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.95rem(15.2px) → 1rem(16px). 세부 포인트는
+       실제 정보 내용을 담는 본문급 텍스트이므로 본문(.card-summary, 1rem)보다 작게 두지 않는다.
+       근거는 card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     line-height: 1.6;
   }
 
@@ -123,7 +129,9 @@
     color: var(--color-warning-text);
     padding: 10px 12px;
     border-radius: 6px;
-    font-size: 0.78rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.78rem(12.48px) → 1rem(16px). 면책 문구는
+       금전적 판단에 영향을 줄 수 있는 경고성 정보(CLAUDE.md 콘텐츠 규칙)이므로 본문보다 작게
+       만들지 않는다. 근거는 card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     line-height: 1.5;
     margin: 0 0 16px;
   }
@@ -133,7 +141,8 @@
     justify-content: space-between;
     align-items: baseline;
     color: var(--color-text);
-    font-size: 0.8rem;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.8rem(12.8px) → 1rem(16px). 근거는
+       card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
     border-top: 1px solid #DDDDDD;
     padding-top: 10px;
   }
