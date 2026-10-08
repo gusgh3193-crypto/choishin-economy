@@ -106,7 +106,28 @@ for filepath in "${post_files[@]}"; do
     keywords_inner="$(echo "${keywords_inner}" | sed "s/'/\"/g")"
     keywords_inner="$(echo "${keywords_inner}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
     if [ -n "${keywords_inner}" ]; then
-      keywords_json="[${keywords_inner}]"
+      # 각 항목을 json_escape()에 통과시킨다. 그대로 꽂아 넣으면 항목 안에
+      # "나 \가 있을 때 유효하지 않은 JSON이 생성된다(2026-10-08 재현 확인).
+      keywords_json="["
+      first=1
+      IFS=',' read -ra kw_array_items <<< "${keywords_inner}"
+      for kw_item in "${kw_array_items[@]}"; do
+        kw_item_trimmed="$(echo "${kw_item}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        [ -z "${kw_item_trimmed}" ] && continue
+        # 바깥 쌍따옴표를 벗겨내고 안쪽 내용만 이스케이프한다
+        if [[ "${kw_item_trimmed}" =~ ^\"(.*)\"$ ]]; then
+          kw_inner_value="${BASH_REMATCH[1]}"
+        else
+          kw_inner_value="${kw_item_trimmed}"
+        fi
+        if [ "${first}" -eq 1 ]; then
+          keywords_json="${keywords_json}\"$(json_escape "${kw_inner_value}")\""
+          first=0
+        else
+          keywords_json="${keywords_json}, \"$(json_escape "${kw_inner_value}")\""
+        fi
+      done
+      keywords_json="${keywords_json}]"
     else
       keywords_json="[]"
     fi
