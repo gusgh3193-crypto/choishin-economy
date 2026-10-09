@@ -55,6 +55,29 @@ json_escape() {
   printf '%s' "${s}"
 }
 
+# keywords 배열 내부를 쉼표로 쪼갠다. 단, 쌍따옴표 안의 쉼표는 구분자로 보지
+# 않는다("물가, 상승" 처럼 키워드 자체에 쉼표가 들어있으면 IFS=',' 단순 분리는
+# 따옴표 경계를 무시하고 잘못 쪼개 stray quote가 섞여 들어간다, 2026-10-09 재현 확인).
+split_keywords_items() {
+  local s="$1"
+  local current="" in_quotes=0 i char
+  for (( i=0; i<${#s}; i++ )); do
+    char="${s:$i:1}"
+    if [ "${char}" = '"' ]; then
+      in_quotes=$((1 - in_quotes))
+      current="${current}${char}"
+    elif [ "${char}" = ',' ] && [ "${in_quotes}" -eq 0 ]; then
+      printf '%s\n' "${current}"
+      current=""
+    else
+      current="${current}${char}"
+    fi
+  done
+  if [ -n "${current}" ]; then
+    printf '%s\n' "${current}"
+  fi
+}
+
 file_count=0
 
 for filepath in "${post_files[@]}"; do
@@ -108,10 +131,12 @@ for filepath in "${post_files[@]}"; do
     if [ -n "${keywords_inner}" ]; then
       # 각 항목을 json_escape()에 통과시킨다. 그대로 꽂아 넣으면 항목 안에
       # "나 \가 있을 때 유효하지 않은 JSON이 생성된다(2026-10-08 재현 확인).
+      # 쪼개는 것 자체는 split_keywords_items()로 따옴표 안 쉼표를 보존한다
+      # (2026-10-09 재현 확인: 단순 IFS=',' 분리는 "물가, 상승" 같은 키워드를
+      # 두 조각으로 잘못 쪼갠다).
       keywords_json="["
       first=1
-      IFS=',' read -ra kw_array_items <<< "${keywords_inner}"
-      for kw_item in "${kw_array_items[@]}"; do
+      while IFS= read -r kw_item; do
         kw_item_trimmed="$(echo "${kw_item}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
         [ -z "${kw_item_trimmed}" ] && continue
         # 바깥 쌍따옴표를 벗겨내고 안쪽 내용만 이스케이프한다
@@ -126,7 +151,7 @@ for filepath in "${post_files[@]}"; do
         else
           keywords_json="${keywords_json}, \"$(json_escape "${kw_inner_value}")\""
         fi
-      done
+      done < <(split_keywords_items "${keywords_inner}")
       keywords_json="${keywords_json}]"
     else
       keywords_json="[]"
