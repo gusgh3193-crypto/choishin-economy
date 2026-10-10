@@ -30,6 +30,31 @@ DISCLAIMER_KEYWORDS=(책임 투자 권장 대출)
 KEYWORDS_ITEM_DOUBLE_QUOTED_REGEX='^"[^"]*"$'
 KEYWORDS_ITEM_SINGLE_QUOTED_REGEX="^'[^']*'$"
 
+# keywords 배열 내부를 쉼표로 쪼갠다. 단, 쌍따옴표 안의 쉼표는 구분자로 보지
+# 않는다("물가, 상승" 처럼 키워드 자체에 쉼표가 들어있으면 IFS=',' 단순 분리는
+# 따옴표 경계를 무시하고 잘못 쪼개 거짓 FAIL을 만들어낸다, 2026-10-10 재현 확인).
+# scripts/generate_jsonld.sh의 동일 함수를 그대로 가져온 것이다(두 스크립트는
+# 독립 실행 파일이라 공유 라이브러리로 추출하지 않고 복사해서 둔다).
+split_keywords_items() {
+  local s="$1"
+  local current="" in_quotes=0 i char
+  for (( i=0; i<${#s}; i++ )); do
+    char="${s:$i:1}"
+    if [ "${char}" = '"' ]; then
+      in_quotes=$((1 - in_quotes))
+      current="${current}${char}"
+    elif [ "${char}" = ',' ] && [ "${in_quotes}" -eq 0 ]; then
+      printf '%s\n' "${current}"
+      current=""
+    else
+      current="${current}${char}"
+    fi
+  done
+  if [ -n "${current}" ]; then
+    printf '%s\n' "${current}"
+  fi
+}
+
 overall_status=0
 file_count=0
 
@@ -97,14 +122,13 @@ for filepath in "${post_files[@]}"; do
   #      (3-3과 동일하게 keywords_line이 ^\[(.*)\]...$ 에 매칭된 경우에만 검사).
   if [[ "${keywords_line}" =~ ^\[(.*)\][[:space:]]*$ ]] && [ -n "${keywords_trimmed}" ]; then
     keywords_unquoted_found=0
-    IFS=',' read -ra keywords_items <<< "${keywords_trimmed}"
-    for kw_item in "${keywords_items[@]}"; do
+    while IFS= read -r kw_item; do
       kw_item_trimmed="$(echo "${kw_item}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
       [ -z "${kw_item_trimmed}" ] && continue
       if [[ ! "${kw_item_trimmed}" =~ ${KEYWORDS_ITEM_DOUBLE_QUOTED_REGEX} ]] && [[ ! "${kw_item_trimmed}" =~ ${KEYWORDS_ITEM_SINGLE_QUOTED_REGEX} ]]; then
         keywords_unquoted_found=1
       fi
-    done
+    done < <(split_keywords_items "${keywords_trimmed}")
     if [ ${keywords_unquoted_found} -eq 1 ]; then
       file_problems+=("frontmatter의 keywords 배열 항목에 따옴표가 없습니다 (예: [금리 인상] → [\"금리 인상\"])")
     fi
