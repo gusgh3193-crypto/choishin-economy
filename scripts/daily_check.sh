@@ -37,11 +37,21 @@
 #      확인한다. 7)의 도메인 일관성 검증은 robots.txt의 Sitemap 줄에서
 #      스킴+호스트만 비교하고 User-agent 줄 존재 여부는 보지 않으므로,
 #      robots.txt 자체의 기본 구조가 깨졌는지는 이 단계에서 별도로 확인한다.
+#  10) 색상 팔레트 일치 회귀 테스트 - scripts/test_color_palette.sh를 실행해
+#      design/site.css의 :root 색상 변수 9개와 design/color-palette.md
+#      표의 hex 값이 서로 일치하는지 검증한다.
+#  11) split_keywords_items() 복붙 함수 동일성 회귀 테스트 -
+#      scripts/test_split_keywords.sh를 실행해 scripts/generate_jsonld.sh와
+#      scripts/validate_posts.sh에 복붙되어 있는 split_keywords_items()
+#      함수가 두 파일에서 바이트 단위로 동일한지, 그리고 실제로 올바르게
+#      동작하는지 검증한다.
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
-# 4번째, 5번째, 6번째, 7번째, 8번째, 9번째 검증 단계는 daily_check.sh 자체에 추가된
-# 로직이며, 기존 세 스크립트를 건드리지 않는다.
+# 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째 검증 단계는
+# daily_check.sh 자체에 추가된 로직이며, 기존 다섯 스크립트
+# (validate_posts.sh, generate_sitemap.sh, generate_jsonld.sh,
+# test_color_palette.sh, test_split_keywords.sh)의 내용을 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -57,6 +67,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 VALIDATE_SCRIPT="${SCRIPT_DIR}/validate_posts.sh"
 SITEMAP_SCRIPT="${SCRIPT_DIR}/generate_sitemap.sh"
 JSONLD_SCRIPT="${SCRIPT_DIR}/generate_jsonld.sh"
+COLOR_PALETTE_TEST_SCRIPT="${SCRIPT_DIR}/test_color_palette.sh"
+SPLIT_KEYWORDS_TEST_SCRIPT="${SCRIPT_DIR}/test_split_keywords.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
 SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 POSTS_DIR="${REPO_ROOT}/posts"
@@ -64,28 +76,28 @@ POSTS_DIR="${REPO_ROOT}/posts"
 overall_status=0
 
 echo "=========================================="
-echo "[1/9] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/11] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/9] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/11] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/9] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/11] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/9] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/11] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -117,7 +129,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/9] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/11] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -139,7 +151,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[6/9] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "[6/11] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_required_fields_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -238,7 +250,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[7/9] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
+echo "[7/11] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
 echo "=========================================="
 domain_consistency_status=0
 ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
@@ -359,7 +371,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[8/9] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
+echo "[8/11] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
 echo "=========================================="
 posts_sitemap_status=0
 if [ ! -d "${POSTS_DIR}" ]; then
@@ -449,7 +461,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[9/9] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
+echo "[9/11] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
 echo "=========================================="
 robots_validate_status=0
 if [ ! -f "${ROBOTS_FILE}" ]; then
@@ -490,7 +502,21 @@ else
   fi
 fi
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[10/11] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
+echo "=========================================="
+bash "${COLOR_PALETTE_TEST_SCRIPT}"
+color_palette_status=$?
+
+echo ""
+echo "=========================================="
+echo "[11/11] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
+echo "=========================================="
+bash "${SPLIT_KEYWORDS_TEST_SCRIPT}"
+split_keywords_status=$?
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -515,6 +541,8 @@ echo "6) JSON-LD 필수 필드 검증 (seo/jsonld/*.json) : $(status_label ${jso
 echo "7) 도메인 일관성 검증 (sitemap.xml ↔ jsonld/*.json ↔ robots.txt) : $(status_label ${domain_consistency_status})"
 echo "8) posts ↔ sitemap 글 목록 일치 검증 (posts/ ↔ sitemap.xml) : $(status_label ${posts_sitemap_status})"
 echo "9) robots.txt 기본 구조 검증 (seo/robots.txt) : $(status_label ${robots_validate_status})"
+echo "10) 색상 팔레트 일치 회귀 테스트 (test_color_palette.sh) : $(status_label ${color_palette_status})"
+echo "11) split_keywords_items() 함수 동일성 회귀 테스트 (test_split_keywords.sh) : $(status_label ${split_keywords_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
