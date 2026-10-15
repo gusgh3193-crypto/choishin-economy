@@ -1,0 +1,210 @@
+<!-- 이 파일은 design/card-template-overflow-test.html과 동일한 HTML/CSS 구조(카드 마크업,
+     클래스명, 1:1·4:5 두 비율)를 그대로 가져와 만든 "재조정 기준 검증용" 픽스처입니다.
+     용도: design/card-template-guide.md "카드뉴스 플레이스홀더별 권장 글자 수 기준" 섹션의
+     "재조정 — 오버플로 실측 반영" 하위 섹션에 정리된 재조정된 권장 최대 글자 수
+     (eyebrow 12자 / title 24자 / summary 40자 / points 18자×2개 / disclaimer 18자)를
+     각 플레이스홀더에 "정확히" 채운 문구로 구성했다. 기존 card-template-overflow-test.html은
+     FAIL 사례 기록용으로 그대로 보존하며 이 파일은 그것을 수정한 것이 아니라 별도로 새로
+     작성한 파일이다. design/card-template.html 원본도 수정하지 않았다.
+     글자 수(공백 포함, 문장부호 포함)는 직접 세어 표의 상한선과 정확히 일치시켰다:
+       - .card-eyebrow: "재테크 기초 지식 모음" = 12자
+       - .card-title:   "금리 인상기 가계부채 관리 체크리스트 총정리" = 24자
+       - .card-summary: "금리가 오르면 가계 대출 이자와 저축 이자도 함께 바뀌니 확인해 두세요." = 40자
+       - .card-points li 1: "예금 적금 금리 비교해 가입하세요" = 18자
+       - .card-points li 2: "고정금리 변동금리 차이 알아두세요" = 18자 (불릿 2개, 권장대로 3개 -> 2개)
+       - .card-disclaimer: "투자판단 책임은 본인에게 있습니다" = 18자 (CLAUDE.md 콘텐츠 규칙에 따른
+         실제 면책 취지 문구 — 투자 판단에 대한 책임이 본인에게 있음을 명시)
+     실제 브라우저 렌더링/높이 측정(clientHeight, PASS/FAIL 판정)은 디자인팀이 수행하지
+     않았다 — 마스터가 헤드리스 브라우저로 재검증할 예정이다. -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[카드뉴스 템플릿 시안 — 배포용 아님, 재조정 기준 검증용]</title>
+<link rel="stylesheet" href="site.css">
+<style>
+  /* site.css의 색상 변수(--color-bg, --color-text, --color-heading, --color-link,
+     --color-warning-bg, --color-warning-text)를 그대로 재사용한다. 새 색상 변수는
+     추가하지 않았다. */
+
+  body {
+    /* site.css의 body 기본값(폰트, line-height 등)은 그대로 두고, 이 미리보기
+     페이지에서는 카드를 가운데 정렬해서 보여주기 위한 레이아웃만 추가한다. */
+    padding: 32px 16px 64px;
+  }
+
+  .preview-note {
+    max-width: 1100px;
+    margin: 0 auto 32px;
+    padding: 16px;
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    border-radius: 6px;
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.95rem(15.2px) → 1rem(16px). 근거는
+       card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
+    line-height: 1.7;
+  }
+
+  .card-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-slot-label {
+    color: var(--color-text);
+    font-size: 1rem; /* 2026-10-08 폰트 크기 재점검: 0.9rem(14.4px) → 1rem(16px). 근거는
+       card-template-guide.md "카드뉴스 폰트 크기 재점검" 섹션 참고. */
+    text-align: center;
+  }
+
+  /* === 카드뉴스 카드 본체 ===
+     실제 내보내기(export) 기준 크기는 1080x1080px(정방형) / 1080x1350px(4:5)이지만,
+     화면 미리보기에서는 뷰포트 너비(vw)에 맞춰 축소 표시하기 위해 width: min(90vw, 440px)인
+     vw 기반 반응형 박스로 만든다.
+     마케팅/디자인 담당자가 실제 이미지로 내보낼 때는 이 비율을 유지한 채
+     1080px 기준(또는 2x인 2160px)으로 캡처/렌더링하면 된다. */
+  .card {
+    width: min(90vw, 440px);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6%;
+    box-sizing: border-box;
+    border: 1px solid #DDDDDD; /* site.css의 표 테두리와 동일한 중립 그레이, 카드 바깥 경계만 구분 */
+  }
+
+  .card.ratio-1-1 {
+    aspect-ratio: 1 / 1; /* 1080x1080px 기준 — 인스타그램/카카오 등에서 가장 흔한 정방형 SNS 카드 비율 */
+  }
+
+  .card.ratio-4-5 {
+    aspect-ratio: 4 / 5; /* 1080x1350px 기준 — 모바일 피드에서 세로로 더 큰 면적을 차지하는 비율 */
+  }
+
+  .card-eyebrow {
+    color: var(--color-link);
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 0 0 12px;
+    /* 링크가 아니라 라벨이므로 밑줄은 쓰지 않는다. 색상은 site.css의 --color-link를
+       그대로 재사용했을 뿐 실제 하이퍼링크 기능은 없다. */
+  }
+
+  .card-title {
+    color: var(--color-heading);
+    font-size: 1.6rem;
+    line-height: 1.4;
+    margin: 0 0 16px;
+  }
+
+  .card-summary {
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+
+  .card-points {
+    margin: 0 0 16px;
+    padding-left: 1.1rem;
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .card-points li {
+    margin-bottom: 6px;
+  }
+
+  .card-disclaimer {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0 0 16px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    color: var(--color-text);
+    font-size: 1rem;
+    border-top: 1px solid #DDDDDD;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<p class="preview-note">
+  이 페이지는 배포용이 아닌 "재조정된 권장 글자 수 기준(2026-10-13/14 재조정안)" 검증용
+  픽스처입니다. design/card-template-guide.md의 "재조정된 권장 최대 글자 수" 표
+  (eyebrow 12자/title 24자/summary 40자/points 18자×2개/disclaimer 18자) 상한선을
+  정확히 채운 더미 문구이며, 실제 경제 정보는 담고 있지 않습니다. 정방형(1:1)과 4:5 두
+  가지 비율을 함께 보여줍니다.
+</p>
+
+<div class="card-gallery">
+
+  <div class="card-slot">
+    <div class="card ratio-1-1">
+      <div>
+        <p class="card-eyebrow">재테크 기초 지식 모음</p>
+        <p class="card-title">금리 인상기 가계부채 관리 체크리스트 총정리</p>
+        <p class="card-summary">금리가 오르면 가계 대출 이자와 저축 이자도 함께 바뀌니 확인해 두세요.</p>
+        <ul class="card-points">
+          <li>예금 적금 금리 비교해 가입하세요</li>
+          <li>고정금리 변동금리 차이 알아두세요</li>
+        </ul>
+        <p class="card-disclaimer">투자판단 책임은 본인에게 있습니다</p>
+      </div>
+      <div class="card-footer">
+        <span>[최신경제 워드마크/로고 자리]</span>
+        <span>[1/5]</span>
+      </div>
+    </div>
+    <p class="card-slot-label">정방형(1:1) — 실제 내보내기 기준 1080×1080px</p>
+  </div>
+
+  <div class="card-slot">
+    <div class="card ratio-4-5">
+      <div>
+        <p class="card-eyebrow">재테크 기초 지식 모음</p>
+        <p class="card-title">금리 인상기 가계부채 관리 체크리스트 총정리</p>
+        <p class="card-summary">금리가 오르면 가계 대출 이자와 저축 이자도 함께 바뀌니 확인해 두세요.</p>
+        <ul class="card-points">
+          <li>예금 적금 금리 비교해 가입하세요</li>
+          <li>고정금리 변동금리 차이 알아두세요</li>
+        </ul>
+        <p class="card-disclaimer">투자판단 책임은 본인에게 있습니다</p>
+      </div>
+      <div class="card-footer">
+        <span>[최신경제 워드마크/로고 자리]</span>
+        <span>[1/5]</span>
+      </div>
+    </div>
+    <p class="card-slot-label">4:5 — 실제 내보내기 기준 1080×1350px</p>
+  </div>
+
+</div>
+
+</body>
+</html>
