@@ -72,6 +72,41 @@ if [ ${#post_files[@]} -eq 0 ]; then
   exit 0
 fi
 
+# 0) 슬러그 중복 검사
+#    파일명(YYYY-MM-DD-슬러그.md)에서 날짜 접두어를 뗀 나머지(슬러그)가
+#    같은 파일이 2개 이상이면 FAIL 처리한다.
+#    generate_sitemap.sh/generate_jsonld.sh는 최종 공개 URL(${BASE_URL}/posts/${슬러그})과
+#    JSON-LD 출력 파일명(seo/jsonld/${슬러그}.json)에 날짜를 전혀 포함하지 않고
+#    슬러그만 사용하므로, 서로 다른 날짜의 두 글이 같은 슬러그를 쓰면
+#    같은 URL로 충돌하거나 한쪽의 JSON-LD 파일이 조용히 덮어써진다
+#    (2026-10-16 마스터 지시로 추가된 검증).
+SLUG_ONLY_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-(.+)\.md$'
+declare -A slug_to_files
+
+for filepath in "${post_files[@]}"; do
+  filename="$(basename "${filepath}")"
+  if [[ "${filename}" =~ ${SLUG_ONLY_REGEX} ]]; then
+    slug="${BASH_REMATCH[1]}"
+    if [ -n "${slug_to_files[${slug}]+x}" ]; then
+      slug_to_files["${slug}"]="${slug_to_files[${slug}]} ${filename}"
+    else
+      slug_to_files["${slug}"]="${filename}"
+    fi
+  fi
+done
+
+for slug in "${!slug_to_files[@]}"; do
+  files_for_slug="${slug_to_files[${slug}]}"
+  file_count_for_slug="$(echo "${files_for_slug}" | wc -w)"
+  if [ "${file_count_for_slug}" -gt 1 ]; then
+    overall_status=1
+    echo "[FAIL] 슬러그 중복: '${slug}' 슬러그를 사용하는 파일이 ${file_count_for_slug}개 있습니다"
+    for conflicting_file in ${files_for_slug}; do
+      echo "        - ${conflicting_file}"
+    done
+  fi
+done
+
 for filepath in "${post_files[@]}"; do
   file_count=$((file_count + 1))
   filename="$(basename "${filepath}")"
