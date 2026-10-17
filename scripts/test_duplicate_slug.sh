@@ -53,14 +53,23 @@ fi
 
 # 정상 케이스에서 frontmatter/면책 문구 규칙을 모두 만족시키기 위한
 # 공통 본문 조각.
+# date는 파일명(YYYY-MM-DD-슬러그.md)의 날짜 부분을 그대로 사용해 frontmatter에
+# 넣는다. validate_posts.sh에 date 필드 필수 검사(REQUIRED_FIELDS에 date 추가,
+# 2026-10-17 마스터 지시)가 추가되면서 date 필드가 없던 이 fixture가 "정상
+# 케이스"인데도 FAIL로 오판되는 문제가 생겨, 그 공백만 메우기 위해 추가함
+# (슬러그 중복 검출이라는 이 테스트 본래 목적과는 무관).
 make_valid_post() {
   local filepath="$1"
   local title="$2"
+  local filename file_date
+  filename="$(basename "${filepath}")"
+  file_date="${filename:0:10}"
   cat > "${filepath}" <<EOF
 ---
 title: "${title}"
 meta_description: "슬러그 중복 회귀 테스트용 임시 글입니다"
 keywords: ["테스트"]
+date: ${file_date}
 ---
 
 이 글은 scripts/test_duplicate_slug.sh가 만든 임시 테스트용 글입니다.

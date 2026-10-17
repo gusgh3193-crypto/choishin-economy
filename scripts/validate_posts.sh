@@ -4,7 +4,7 @@
 #
 # posts/ 폴더의 모든 마크다운 글이 CLAUDE.md 콘텐츠 규칙을 지키는지 검증한다.
 #   1) 파일명이 YYYY-MM-DD-슬러그.md 형식을 따르는가
-#   2) frontmatter(--- ~ ---)에 title, meta_description, keywords 필드가 모두 있는가
+#   2) frontmatter(--- ~ ---)에 title, meta_description, keywords, date 필드가 모두 있는가
 #   3) 본문에 이탤릭(*...*) 처리된 면책 문구(책임/투자/권장 등 키워드 포함)가 있는가
 #
 # 사용법:
@@ -22,7 +22,13 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 POSTS_DIR="${REPO_ROOT}/posts"
 
 FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$'
-REQUIRED_FIELDS=(title meta_description keywords)
+# date는 2026-10-17 마스터 지시로 추가됨: frontmatter에 date 필드가 아예
+# 없어도 조용히 PASS 처리되던 공백을 막기 위함이다. design/style-guide.md의
+# "작성일 표시" 규칙과 generate_sitemap.sh/generate_jsonld.sh의
+# lastmod/datePublished 우선 사용 로직이 모두 frontmatter의 date 값 존재를
+# 전제로 하므로, title/meta_description/keywords와 동일하게 필수 필드로
+# 취급한다. 아래 3-2 검사(날짜 형식·파일명 일치 검사)와는 별개의 검사다.
+REQUIRED_FIELDS=(title meta_description keywords date)
 # 면책 문구로 인정할 키워드 (이탤릭 처리된 한 줄 안에 하나 이상 포함되어야 함)
 DISCLAIMER_KEYWORDS=(책임 투자 권장 대출)
 # keywords 배열 항목이 따옴표로 감싸여 있는지 검사할 때 쓰는 정규식
@@ -206,6 +212,8 @@ for filepath in "${post_files[@]}"; do
   #      generate_sitemap.sh/generate_jsonld.sh는 frontmatter에 date가 있으면 그 값을
   #      lastmod/datePublished로 우선 사용하므로, 파일명 날짜와 다르면 틀린 날짜가 그대로
   #      SEO 산출물에 반영된다. frontmatter에 date 필드가 있을 때만 검사하며, 다르면 FAIL 처리한다.
+  #      (date 필드가 아예 없는 경우는 위 3) 필수 필드 검사에서 이미 FAIL 처리되므로
+  #      여기서는 다루지 않는다. 2026-10-17 마스터 지시로 둘의 역할을 분리함.)
   date_line="$(echo "${frontmatter}" | sed -n -E '/^date:[[:space:]]*.+/{s/^date:[[:space:]]*//;p;q}')"
   if [ -n "${date_line}" ]; then
     if [[ "${date_line}" =~ ^\"?([0-9]{4}-[0-9]{2}-[0-9]{2})\"? ]]; then
@@ -256,7 +264,7 @@ echo ""
 echo "검사한 파일 수: ${file_count}"
 
 if [ ${overall_status} -eq 0 ]; then
-  echo "모든 글이 frontmatter(title, meta_description, keywords), 파일명, 면책 문구 규칙을 통과했습니다."
+  echo "모든 글이 frontmatter(title, meta_description, keywords, date), 파일명, 면책 문구 규칙을 통과했습니다."
 else
   echo "일부 글에서 문제가 발견되었습니다. 위 [FAIL] 항목을 확인해 수정하세요."
 fi

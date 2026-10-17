@@ -57,14 +57,23 @@
 #      URL/출력 파일명에 날짜 없이 슬러그만 쓰므로, 슬러그 중복은 서로 다른
 #      날짜의 글이 같은 URL/JSON-LD 파일로 충돌하는 문제로 이어진다
 #      (posts/의 실제 파일은 건드리지 않고 임시 디렉터리에서 검증한다).
+#  14) date 필드 필수 검출 회귀 테스트 - scripts/test_required_date_field.sh를
+#      실행해, validate_posts.sh의 REQUIRED_FIELDS에 추가된 date 필드 검사
+#      (frontmatter에 date 필드가 아예 없으면 FAIL)가 실제로 동작하는지
+#      검증한다. design/style-guide.md의 "작성일 표시" 규칙과
+#      generate_sitemap.sh/generate_jsonld.sh의 lastmod/datePublished 우선
+#      사용 로직이 모두 frontmatter의 date 값 존재를 전제로 하므로, date
+#      필드가 통째로 빠진 글이 조용히 PASS 되는 공백을 막기 위한 단계다
+#      (posts/의 실제 파일은 건드리지 않고 임시 디렉터리에서 검증한다,
+#      2026-10-17 마스터 지시).
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
-# 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째
-# 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 일곱 스크립트
+# 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째,
+# 14번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 여덟 스크립트
 # (validate_posts.sh, generate_sitemap.sh, generate_jsonld.sh,
 # test_color_palette.sh, test_split_keywords.sh, test_sitemap_dash_title.sh,
-# test_duplicate_slug.sh)의 내용을 건드리지 않는다.
+# test_duplicate_slug.sh, test_required_date_field.sh)의 내용을 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -84,6 +93,7 @@ COLOR_PALETTE_TEST_SCRIPT="${SCRIPT_DIR}/test_color_palette.sh"
 SPLIT_KEYWORDS_TEST_SCRIPT="${SCRIPT_DIR}/test_split_keywords.sh"
 SITEMAP_DASH_TITLE_TEST_SCRIPT="${SCRIPT_DIR}/test_sitemap_dash_title.sh"
 DUPLICATE_SLUG_TEST_SCRIPT="${SCRIPT_DIR}/test_duplicate_slug.sh"
+REQUIRED_DATE_FIELD_TEST_SCRIPT="${SCRIPT_DIR}/test_required_date_field.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
 SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 POSTS_DIR="${REPO_ROOT}/posts"
@@ -91,28 +101,28 @@ POSTS_DIR="${REPO_ROOT}/posts"
 overall_status=0
 
 echo "=========================================="
-echo "[1/13] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/14] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/13] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/14] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/13] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/14] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/13] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/14] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -144,7 +154,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/13] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/14] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -166,7 +176,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[6/13] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "[6/14] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_required_fields_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -265,7 +275,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[7/13] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
+echo "[7/14] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
 echo "=========================================="
 domain_consistency_status=0
 ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
@@ -386,7 +396,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[8/13] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
+echo "[8/14] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
 echo "=========================================="
 posts_sitemap_status=0
 if [ ! -d "${POSTS_DIR}" ]; then
@@ -476,7 +486,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[9/13] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
+echo "[9/14] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
 echo "=========================================="
 robots_validate_status=0
 if [ ! -f "${ROBOTS_FILE}" ]; then
@@ -519,33 +529,40 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[10/13] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
+echo "[10/14] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
 echo "=========================================="
 bash "${COLOR_PALETTE_TEST_SCRIPT}"
 color_palette_status=$?
 
 echo ""
 echo "=========================================="
-echo "[11/13] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
+echo "[11/14] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
 echo "=========================================="
 bash "${SPLIT_KEYWORDS_TEST_SCRIPT}"
 split_keywords_status=$?
 
 echo ""
 echo "=========================================="
-echo "[12/13] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
+echo "[12/14] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
 echo "=========================================="
 bash "${SITEMAP_DASH_TITLE_TEST_SCRIPT}"
 sitemap_dash_title_status=$?
 
 echo ""
 echo "=========================================="
-echo "[13/13] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
+echo "[13/14] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
 echo "=========================================="
 bash "${DUPLICATE_SLUG_TEST_SCRIPT}"
 duplicate_slug_test_status=$?
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[14/14] date 필드 필수 검출 회귀 테스트를 실행합니다: test_required_date_field.sh"
+echo "=========================================="
+bash "${REQUIRED_DATE_FIELD_TEST_SCRIPT}"
+required_date_field_test_status=$?
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ] || [ ${required_date_field_test_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -574,6 +591,7 @@ echo "10) 색상 팔레트 일치 회귀 테스트 (test_color_palette.sh) : $(s
 echo "11) split_keywords_items() 함수 동일성 회귀 테스트 (test_split_keywords.sh) : $(status_label ${split_keywords_status})"
 echo "12) sitemap '--' 제목 주석 생략 회귀 테스트 (test_sitemap_dash_title.sh) : $(status_label ${sitemap_dash_title_status})"
 echo "13) 슬러그 중복 검출 회귀 테스트 (test_duplicate_slug.sh) : $(status_label ${duplicate_slug_test_status})"
+echo "14) date 필드 필수 검출 회귀 테스트 (test_required_date_field.sh) : $(status_label ${required_date_field_test_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
