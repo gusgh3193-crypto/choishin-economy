@@ -151,3 +151,53 @@
     font-size: 0.95rem;
     line-height: 1.7;
   }
+
+  /* style-guide.md 6번: 인라인 코드(백틱 1개). 문장 중간에서 살짝만 구분되도록
+     최소한의 배경+padding만 적용. 새 색을 만들지 않고 color-palette.md 2-2번에서
+     이미 계산·검증된 "표 헤더 텍스트 #333333 / 헤더 배경 #F0F0F0 = 11.09:1" 조합을
+     그대로 재사용한다(--color-table-header-bg + --color-text). 본문 기준 4.5:1을
+     넉넉히 충족하므로 별도 대비 계산이 필요 없다. 폰트 크기는 본문(1rem)과 동일하게
+     유지해 8번(접근성) 섹션의 "최소 16px 이상" 기준을 지킨다. */
+  code {
+    background-color: var(--color-table-header-bg);
+    color: var(--color-text);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 1rem;
+  }
+
+  /* style-guide.md 6번/7번: 펜스 코드 블록(백틱 3개)을 감싸는 wrapper.
+     표(.table-wrapper)에 적용한 것과 동일한 overflow-x: auto 패턴으로 가로 스크롤
+     대응한다. style-guide.md 6번이 "줄바꿈을 강제하지 말고 가로 스크롤로 원래 줄을
+     그대로 유지하는 것을 우선한다"고 명시했으므로 white-space: pre-wrap 등 강제
+     줄바꿈 처리는 하지 않는다. */
+  .code-wrapper {
+    overflow-x: auto;
+    margin: 0 0 24px;
+  }
+
+  /* style-guide.md 6번: pre 자체는 줄바꿈 없는 plain text 블록(white-space 기본값
+     pre 유지, 긴 줄은 wrapper의 가로 스크롤로 대응). 배경/텍스트 색은 인라인 코드와
+     동일하게 color-palette.md 2-2번에서 이미 검증된 조합(11.09:1)을 재사용한다.
+     구문 강조(syntax highlighting)용 색상은 추가하지 않는다 — plain text 그대로. */
+  pre {
+    background-color: var(--color-table-header-bg);
+    color: var(--color-text);
+    padding: 16px;
+    border-radius: 6px;
+    margin: 0;
+    /* style-guide.md 6번: 본문 기준(최소 16px/1rem 이상)과 동일하게, 코드 블록이라는
+       이유로 본문보다 작게 만들지 않는다 */
+    font-size: 1rem;
+    line-height: 1.6;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  /* pre 안의 code는 인라인 코드용 배경/padding을 중복 적용하지 않도록 리셋 */
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: 1rem;
+  }
