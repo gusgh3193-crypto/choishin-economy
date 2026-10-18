@@ -6,6 +6,7 @@
 #   1) 파일명이 YYYY-MM-DD-슬러그.md 형식을 따르는가
 #   2) frontmatter(--- ~ ---)에 title, meta_description, keywords, date 필드가 모두 있는가
 #   3) 본문에 이탤릭(*...*) 처리된 면책 문구(책임/투자/권장 등 키워드 포함)가 있는가
+#   4) 본문에 <img ...> 태그가 있다면 alt 속성이 존재하는가(값의 내용은 판단하지 않음)
 #
 # 사용법:
 #   bash scripts/validate_posts.sh
@@ -247,6 +248,28 @@ for filepath in "${post_files[@]}"; do
 
   if [ ${disclaimer_found} -eq 0 ]; then
     file_problems+=("본문에 면책 문구(이탤릭 처리 + 책임/투자/권장 등 키워드 포함)가 없습니다")
+  fi
+
+  # 5) 이미지 alt 속성 존재 검사
+  #    design/style-guide.md 8번(접근성)이 2026-10-12부터 <img> 태그의 alt 속성
+  #    규칙(로고/장식용, 정보성 차트, 중복 표현 금지 등)을 정의하고 있지만, 그동안
+  #    validate_posts.sh에는 이를 강제하는 검사가 전혀 없었다(2026-10-17 date 필드
+  #    공백과 같은 유형). 본문(frontmatter 이후)에 <img ...> 태그가 있는데 그 태그에
+  #    alt 속성이 전혀 없으면 FAIL 처리한다.
+  #    이 검사는 "alt 속성이 존재하는지"만 본다. alt="" (빈 문자열)는 style-guide.md
+  #    8번이 명시한 "순수 장식용 이미지"의 정상 패턴이므로 속성이 존재하는 것으로
+  #    보아 PASS 처리한다. alt 값의 내용(장식용/정보성 구분, 중복 표현 여부 등)이
+  #    적절한지는 사람의 판단이 필요한 영역이라 이 스크립트는 판단하지 않는다
+  #    (2026-10-18 마스터 지시). <img> 태그가 전혀 없는 글은 이 검사의 대상이 아니므로
+  #    FAIL 처리하지 않는다.
+  img_tags="$(echo "${body}" | grep -oiE '<img[^>]*>')"
+  if [ -n "${img_tags}" ]; then
+    while IFS= read -r img_tag; do
+      [ -z "${img_tag}" ] && continue
+      if ! echo "${img_tag}" | grep -qi 'alt='; then
+        file_problems+=("본문의 <img> 태그에 alt 속성이 없습니다: ${img_tag}")
+      fi
+    done <<< "${img_tags}"
   fi
 
   if [ ${#file_problems[@]} -eq 0 ]; then
