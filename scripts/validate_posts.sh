@@ -262,11 +262,18 @@ for filepath in "${post_files[@]}"; do
   #    적절한지는 사람의 판단이 필요한 영역이라 이 스크립트는 판단하지 않는다
   #    (2026-10-18 마스터 지시). <img> 태그가 전혀 없는 글은 이 검사의 대상이 아니므로
   #    FAIL 처리하지 않는다.
+  #    주의(2026-10-19 회귀 수정): 단순 부분 문자열 검사 'alt='는 data-alt="..."처럼
+  #    "alt="로 끝나는 다른 속성 이름까지 "alt 속성이 있다"고 잘못 매치해버리는
+  #    false positive가 있었다(마스터가 `echo '<img src="x.jpg" data-alt="ignored">' |
+  #    grep -qi 'alt='`로 직접 재현). 실제 alt 속성만 인식하도록 "alt=" 앞에 공백이
+  #    오는 경우만 매치시킨다([[:space:]]alt=). <img> 태그는 항상 태그명과 첫 속성
+  #    사이에 공백이 있으므로(예: "<img alt=..."), 진짜 alt 속성은 이 경계 조건으로
+  #    빠짐없이 걸러지고, data-alt/aria-alt 같은 다른 속성명은 걸러지지 않는다.
   img_tags="$(echo "${body}" | grep -oiE '<img[^>]*>')"
   if [ -n "${img_tags}" ]; then
     while IFS= read -r img_tag; do
       [ -z "${img_tag}" ] && continue
-      if ! echo "${img_tag}" | grep -qi 'alt='; then
+      if ! echo "${img_tag}" | grep -qiE '[[:space:]]alt='; then
         file_problems+=("본문의 <img> 태그에 alt 속성이 없습니다: ${img_tag}")
       fi
     done <<< "${img_tags}"

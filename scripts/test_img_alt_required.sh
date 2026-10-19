@@ -36,6 +36,15 @@
 #      글 하나를 임시 posts/ 안에 만들고 validate_posts.sh(사본)를
 #      실행했을 때, exit code가 0(PASS)인지 확인한다(회귀 방지 — 이미지가
 #      없는 글은 이 검사로 FAIL 처리되지 않아야 한다).
+#   4) [data-alt만 있는 케이스 — 2026-10-19 회귀 방지] 실제 alt 속성은
+#      없고 "alt="로 끝나는 다른 속성(data-alt="...")만 있는 <img> 태그가
+#      있는 글 하나를 임시 posts/ 안에 만들고 validate_posts.sh(사본)를
+#      실행했을 때, exit code가 1(FAIL)이고 출력에 "alt 속성이 없습니다"
+#      메시지가 포함되는지 확인한다. 이전에는 grep -qi 'alt='가 단순 부분
+#      문자열 검사라 data-alt="..."의 "alt="까지 매치해 "alt 속성이
+#      있다"고 잘못 판단(false positive)하는 회귀가 있었다(마스터가
+#      `echo '<img src="x.jpg" data-alt="ignored">' | grep -qi 'alt='`로
+#      직접 재현).
 #
 # 사용법:
 #   bash scripts/test_img_alt_required.sh
@@ -193,6 +202,47 @@ if echo "${no_img_output}" | grep -qF "alt 속성이 없습니다"; then
   failures+=("img 태그 없음 케이스에서 alt 속성 누락 오탐")
 else
   echo "[PASS] img 태그가 없는 글에서는 alt 속성 누락 메시지가 출력되지 않았습니다."
+fi
+
+echo ""
+echo "=== 검사 4: 실제 alt 속성 없이 data-alt=\"...\"만 있는 img 태그 -> FAIL 이어야 함 (2026-10-19 회귀 방지) ==="
+DATA_ALT_FILE="2026-01-01-data-alt-only-regression-test.md"
+DATA_ALT_CONTENT='---
+title: "img alt 필수 검사 회귀 테스트용 임시 글(data-alt만 있음)"
+meta_description: "본문에 실제 alt 속성 없이 data-alt 속성만 있는 img 태그가 있는 테스트용 임시 글입니다"
+keywords: ["테스트"]
+date: 2026-01-01
+---
+
+이 글은 scripts/test_img_alt_required.sh가 만든 임시 테스트용 글입니다.
+posts/ 실제 디렉터리에는 저장되지 않습니다. 이 img 태그는 실제 alt 속성이
+없고 "alt="로 끝나는 data-alt 속성만 가지고 있어, 과거에는 단순 부분
+문자열 검사(grep -qi "alt=")가 이를 "alt 속성이 있다"고 잘못 판단했다.
+
+<img src="x.jpg" data-alt="ignored">
+
+*이 글은 투자 판단에 대한 책임을 지지 않는 테스트용 면책 문구입니다.*
+'
+
+data_alt_result="$(run_validate_with_post "${DATA_ALT_FILE}" "${DATA_ALT_CONTENT}")"
+data_alt_status="$(echo "${data_alt_result}" | head -n 1)"
+data_alt_output="$(echo "${data_alt_result}" | tail -n +2)"
+
+echo "${data_alt_output}"
+echo "(실행 exit code: ${data_alt_status})"
+
+if [ "${data_alt_status}" -ne 1 ]; then
+  echo "[FAIL] data-alt 속성만 있고 실제 alt 속성이 없는 img 태그가 있는 경우 exit code가 1이 아니었습니다 (실제: ${data_alt_status})."
+  failures+=("data-alt만 있는 케이스 exit code != 1")
+else
+  echo "[PASS] data-alt 속성만 있고 실제 alt 속성이 없는 img 태그가 있는 경우 exit code가 1(FAIL)입니다."
+fi
+
+if echo "${data_alt_output}" | grep -qF "alt 속성이 없습니다"; then
+  echo "[PASS] 출력에 \"alt 속성이 없습니다\" 메시지가 포함되어 있습니다(= data-alt를 실제 alt로 오탐하지 않음)."
+else
+  echo "[FAIL] 출력에 \"alt 속성이 없습니다\" 메시지가 없습니다(= data-alt를 실제 alt로 잘못 인정하는 회귀가 재발했을 수 있습니다)."
+  failures+=("data-alt만 있는 케이스에서 alt 속성 누락 메시지 누락 (false positive 회귀)")
 fi
 
 echo ""
