@@ -430,3 +430,24 @@ points 17자×2개/disclaimer 17자)를 채운 픽스처를 재측정한 결과,
 환경에서는 실제로 1080px 이미지를 내보내 글자가 선명하게 나오는지(흐려지거나 깨지지
 않는지) 눈으로 확인하지 못했으므로, 내보내기 방법이 확정되면 실제 출력 이미지에서
 `.card-disclaimer`·`.card-footer`·`.card-eyebrow` 등의 가독성을 반드시 재확인해야 한다.
+
+**(2026-10-20 갱신) 확인함(PASS) — 실제 1080px 렌더링에서 오버플로와 글자 크기/가독성을
+모두 확인했다.** 오늘 개발팀이 헤드리스 Chromium(Playwright)으로 viewport를 1400x1600으로
+설정한 뒤, 저장소의 실제 CSS 파일은 전혀 수정하지 않고 `.card.ratio-1-1 { width: 1080px
+!important; }` / `.card.ratio-4-5 { width: 1080px !important; }`만 런타임에 `addStyleTag`로
+주입하는 방식으로 1080px 내보내기를 재현했고, 마스터가 그 결과(스크린샷 포함)를 직접
+재확인했다. `design/card-template.html`과 `design/card-template-reconciled-test.html` 두
+파일, 각각 `.ratio-1-1`·`.ratio-4-5` 두 비율을 측정한 결과 4개 조합 모두
+`clientHeight`=`scrollHeight`로 오버플로 없이 PASS했다(card-template.html: 1:1 1078px·
+4:5 1348px, card-template-reconciled-test.html: 1:1 1078px·4:5 1348px — boundingBox 기준
+1:1=1080×1080px, 4:5=1080×1350px이며 border 1px×2를 빼면 clientWidth/Height와 일치,
+aspect-ratio가 1080px 폭 고정에서도 4:5=1350px 높이로 정확히 변환됨을 실측으로 확인).
+요소별 실제 렌더링 font-size는 두 파일·두 비율 모두 동일하게 `.card-eyebrow` 16px,
+`.card-title` 25.6px, `.card-summary` 16px, `.card-disclaimer` 16px, `.card-footer` 16px로
+측정되어, 위 "카드뉴스 폰트 크기 재점검" 섹션 및 `design/style-guide.md` 8번("본문 16px
+이상") 기준을 모두 충족했다. 스크린샷 4장을 마스터가 직접 열어 육안으로 확인한 결과
+텍스트가 선명하고 흐려지거나 깨지지 않았으며, 줄바꿈이 자연스럽고 텍스트 잘림이 없었고,
+1:1은 정사각형·4:5는 세로로 더 긴 비율로 올바르게 렌더링되어 레이아웃 왜곡도 없었다.
+단, 이때 사용한 측정 스크립트와 스크린샷 자체는 개발팀의 세션 스크래치 디렉터리에만
+있고 저장소에는 커밋되지 않았다(과거 2026-10-13/14 검증과 동일한 방식) — `design/`
+폴더에는 이번 검증으로 인한 CSS/HTML 파일 변경이 없음을 `git status`/`git diff`로 확인했다.
