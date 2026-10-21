@@ -218,6 +218,14 @@ Read로 열어 코드 상의 값을 확인했다.
   디자인팀 산출물"로 간주해 대조했다). 따라서 **코드 상 값 확인 — 통과**. 다만 이는 HTML/CSS 파일에
   그렇게 마크업·선언돼 있다는 확인일 뿐, 실제 브라우저에서 그 위치·글자 크기로 렌더링되는 화면을
   직접 본 것은 아니므로 실제 렌더링은 사이트 미배포로 여전히 확인 못 함(배포 후 재확인 필요)이다.
+  **(2026-10-21 갱신) 실제 렌더링 확인함(PASS)** — 오늘 개발팀이 Playwright 헤드리스 Chromium으로
+  `design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해 실측했고, 마스터가 동일
+  스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음). 실측 결과:
+  `.post-date` computed font-size는 14.4px(= 0.9rem, html 100%=16px 기준과 일치), 본문 리드 `<p>`
+  computed font-size는 16px로, 작성일이 본문보다 실제로 작게 렌더링됨을 수치로 확인했다. DOM 순서도
+  `h1.nextElementSibling === .post-date`가 `true`, `.post-date.nextElementSibling === 리드 p`가
+  `true`로 실측되어, 코드상 확인했던 "H1 → 작성일 → 리드 단락" 순서가 실제 브라우저 DOM에서도 그대로
+  구현됨을 확인했다. 이에 따라 이 항목의 판정을 **"실제 렌더링까지 확인 — 통과"**로 갱신한다.
 - **외부 링크 처리(`target="_blank" rel="noopener noreferrer"`, 내부 링크와 시각적 구분 안 함) —
   코드 상 값 확인(통과), 실제 렌더링은 확인 못 함 (2026-10-19 추가)**: 마스터 점검으로 지적받아
   디자인팀이 직접 재확인했다. `design/style-guide.md` 8번 섹션 147~158행에 외부 링크 규칙(새 탭으로
@@ -235,6 +243,17 @@ Read로 열어 코드 상의 값을 확인했다.
   있다는 점을 참고로 남긴다(이번 점검 범위인 "style-guide.md 규칙 위반 여부"에는 영향 없음). 따라서
   **코드 상 값 확인 — 통과**. 실제 브라우저에서 새 탭으로 열리는 동작, 포커스 표시 등이 그대로
   렌더링되는지는 사이트 미배포로 여전히 확인 못 함.
+  **(2026-10-21 갱신) 실제 렌더링 확인함(PASS)** — 오늘 개발팀이 Playwright 헤드리스 Chromium으로
+  `design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해 실측했고, 마스터가 동일
+  스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음). 실측 결과:
+  `<a href="https://kostat.go.kr">` 요소의 실제 DOM 속성 `target="_blank"`,
+  `rel="noopener noreferrer"`, `href="https://kostat.go.kr"`이 모두 그대로 유지됨을 확인했다.
+  computed style은 `color` `rgb(11,95,165)`(= `--color-link`), `text-decoration-line: underline`,
+  `font-weight: 400`, 배경색은 투명으로 실측되었다. 이 글에는 다른 링크가 없어(`hasOtherLink: false`)
+  비교 대상은 본문 일반 텍스트(`color` `rgb(51,51,51)`, `text-decoration: none`)뿐이며, 외부 링크만을
+  위한 별도 강조(굵게·배경·아이콘 등)는 전혀 없고 공통 `a` 스타일만 적용됨을 실측으로 확인했다. 이에
+  따라 "내부 링크와 시각적으로 구분하지 않는다" 기준을 실제 렌더링까지 충족함을 확인하여, 이 항목의
+  판정을 **"실제 렌더링까지 확인 — 통과"**로 갱신한다.
 - **키보드 포커스 표시(`:focus-visible`) — 코드 상 값 확인(통과), 실제 렌더링은 확인 못 함
   (2026-10-19 추가)**: 마스터 점검으로 지적받아 디자인팀이 직접 재확인했다. `design/style-guide.md`
   8번 섹션 168~172행에 "링크 등 상호작용 요소에 `:focus-visible` 아웃라인을 명시적으로 정의한다...
@@ -246,6 +265,15 @@ Read로 열어 코드 상의 값을 확인했다.
   밑줄(94행 `text-decoration: underline`)과 겹치지 않게 분리한 점도 확인했다. 따라서 **코드 상 값
   확인 — 통과**. 다만 실제 키보드(Tab) 탐색 시 그 아웃라인이 또렷하게 보이는지, 브라우저별 렌더링
   차이가 있는지는 사이트 미배포로 여전히 확인 못 함.
+  **(2026-10-21 갱신) 실제 렌더링 확인함(PASS)** — 오늘 개발팀이 Playwright로 `page.keyboard.press('Tab')`을
+  2회 입력해(programmatic `focus()`가 아니라 진짜 키보드 이벤트로) 외부 링크에 실제로 도달시켰고,
+  마스터가 동일 스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음).
+  `:focus-visible` 매칭을 실측 확인했고(`matches: true`), 실측 computed outline은 `outline-color`
+  `rgb(11,95,165)`(= `--color-link`), `outline-width` `2px`, `outline-style` `solid`,
+  `outline-offset` `2px`로, CSS 선언값(`a:focus-visible { outline: 2px solid var(--color-link);
+  outline-offset: 2px; }`)과 정확히 일치함을 확인했다. 스크린샷 육안 확인으로도 "통계청" 텍스트 주위에
+  밑줄과 분리된 파란 사각형 아웃라인이 뚜렷하게 표시됨을 확인했다. 이에 따라 이 항목의 판정을
+  **"실제 렌더링까지 확인 — 통과"**로 갱신한다.
 - **이미지 대체 텍스트(alt) — 해당 없음 (2026-10-19 추가)**: 마스터 점검으로 지적받아 디자인팀이
   직접 재확인했다. `design/style-guide.md` 8번 섹션 173~216행(2026-10-12 신설)에 `<img>` alt 텍스트
   규칙(장식용은 `alt=""` 또는 짧은 브랜드명, 정보 전달용은 핵심 정보 요약, "이미지"/"사진" 같은
@@ -270,9 +298,9 @@ Read로 열어 코드 상의 값을 확인했다.
 | 볼드는 단락당 최소한(핵심 수치·라벨 1개 내외) | 통과 | 볼드 0회, 남용 없음(단, 기존 개선 제안 미반영 상태 유지) |
 | 코드 블록은 계산식/공식/정확한 수치 예시에만 사용 | 해당 없음 | 이 글에는 인라인 코드·펜스 코드 블록이 전혀 없어 규칙이 적용될 대상 자체가 없음(위반 아님) |
 | 본문 16px 이상, 명도 대비 4.5:1 이상, 표 `<th scope="col">` | 본문 폰트·`<th scope>`·명도 대비 모두 코드 상 값 확인(통과) | `design/site.css` 31번째 줄 `body { font-size: 1rem; }`(html 100%=16px 기준), `.page` 40번째 줄 `padding: 32px 16px 64px`(좌우 16px)로 가이드 충족을 코드상 확인. mockup.html 49~50번째 줄 `<th scope="col">` 2개 모두 적용 확인. 명도 대비는 `design/site.css` 4~12번째 줄 `:root` 색상 변수 9개가 `design/color-palette.md` 2-2번 계산 결과(모두 4.5:1 이상, 6.57:1~17.41:1)와 일치함을 대조해 코드상 값 확인(2026-10-01). 모든 항목의 실제 브라우저 렌더링은 사이트 미배포로 확인 못 함 |
-| 작성일 표시(`.post-date`), H1 바로 아래·리드 단락 위에 "YYYY-MM-DD 작성" 형식 (2026-10-19 추가) | 코드 상 값 확인(통과), 실제 렌더링 확인 못 함 | mockup.html 14~18번째 줄에서 `<h1>`(14행) → `<p class="post-date">2026-09-13 작성</p>`(16행) → 리드 단락(18행) 순서 확인. `design/site.css` 57~61번째 줄 `.post-date { font-size: 0.9rem; ... }`로 본문보다 작게 선언됨을 코드상 확인. 날짜 값은 `posts/2026-09-13-interest-rate-impact.md` 5행 프런트매터 `date: 2026-09-13`과 일치. 실제 렌더링은 확인 못 함 |
-| 외부 링크는 `target="_blank" rel="noopener noreferrer"` 적용, 내부 링크와 시각적 구분 안 함 (2026-10-19 추가) | 코드 상 값 확인(통과), 실제 렌더링 확인 못 함 | mockup.html 35번째 줄 `<a href="https://kostat.go.kr" target="_blank" rel="noopener noreferrer">통계청</a>`에서 세 속성 모두 확인. `design/site.css`에 외부 링크 전용 스타일 없이 91~95번째 줄 공통 `a` 규칙만 적용됨을 확인해 "시각적 구분 안 함" 기준 충족. 단, 원문 마크다운(`posts/2026-09-13-interest-rate-impact.md` 26행)에는 이 링크 문장 자체가 없어 mockup.html 단계에서만 추가된 것으로 보임(참고 사항, 위반 아님). 실제 렌더링은 확인 못 함 |
-| 키보드 포커스 표시(`:focus-visible` 아웃라인, WCAG 2.4.7) (2026-10-19 추가) | 코드 상 값 확인(통과), 실제 렌더링 확인 못 함 | `design/site.css` 102~105번째 줄 `a:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }`로 가이드가 지정한 `--color-link`(6.57:1 검증됨) 재사용을 코드상 확인. 실제 Tab 키보드 탐색 시 렌더링은 확인 못 함 |
+| 작성일 표시(`.post-date`), H1 바로 아래·리드 단락 위에 "YYYY-MM-DD 작성" 형식 (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | mockup.html 14~18번째 줄에서 `<h1>`(14행) → `<p class="post-date">2026-09-13 작성</p>`(16행) → 리드 단락(18행) 순서 확인. `design/site.css` 57~61번째 줄 `.post-date { font-size: 0.9rem; ... }`로 본문보다 작게 선언됨을 코드상 확인. 날짜 값은 `posts/2026-09-13-interest-rate-impact.md` 5행 프런트매터 `date: 2026-09-13`과 일치. **(2026-10-21) Playwright 실측: `.post-date` computed font-size 14.4px vs 리드 `<p>` 16px, DOM 순서 `h1→.post-date→리드 p` 실측 확인(true/true)** |
+| 외부 링크는 `target="_blank" rel="noopener noreferrer"` 적용, 내부 링크와 시각적 구분 안 함 (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | mockup.html 35번째 줄 `<a href="https://kostat.go.kr" target="_blank" rel="noopener noreferrer">통계청</a>`에서 세 속성 모두 확인. `design/site.css`에 외부 링크 전용 스타일 없이 91~95번째 줄 공통 `a` 규칙만 적용됨을 확인해 "시각적 구분 안 함" 기준 충족. 단, 원문 마크다운(`posts/2026-09-13-interest-rate-impact.md` 26행)에는 이 링크 문장 자체가 없어 mockup.html 단계에서만 추가된 것으로 보임(참고 사항, 위반 아님). **(2026-10-21) Playwright 실측: DOM 속성 target/rel/href 유지 확인, computed color rgb(11,95,165)·underline·font-weight 400, 별도 강조 스타일 없음 확인(hasOtherLink: false)** |
+| 키보드 포커스 표시(`:focus-visible` 아웃라인, WCAG 2.4.7) (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | `design/site.css` 102~105번째 줄 `a:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }`로 가이드가 지정한 `--color-link`(6.57:1 검증됨) 재사용을 코드상 확인. **(2026-10-21) Playwright 실측: 실제 Tab 키 2회 입력으로 외부 링크 포커스, `:focus-visible` matches: true, computed outline 2px solid rgb(11,95,165) offset 2px(CSS 선언과 일치), 스크린샷 육안 확인으로도 밑줄과 분리된 파란 아웃라인 확인** |
 | 이미지 alt(장식용 `alt=""`/정보 전달용 핵심 정보 요약, WCAG 1.1.1) (2026-10-19 추가) | 해당 없음 | `posts/2026-09-13-interest-rate-impact.md`, `design/mockup-2026-09-13-interest-rate-impact.html` 모두에 `<img>` 태그 자체가 없어 규칙이 적용될 판정 대상이 없음(6번 코드 블록과 동일 사유, 위반 아님) |
 
 **집계**: 7개 체크리스트 항목 중 완전 통과 3개(제목 체계, 목록, 볼드), 해당 없음 1개(코드 블록 — 이 글에
@@ -293,6 +321,18 @@ mockup.html/site.css의 실제 구현이 이미 일치하며 위반은 발견되
 style-guide.md 위반은 아니므로 별도 수정 없이 참고 사항으로만 기록한다. 이번 추가 역시 "CSS/HTML
 파일에 규칙대로 값이 선언·마크업되어 있다"는 코드상 확인이며, 실제 브라우저 렌더링은 사이트
 미배포로 여전히 확인 못 함이다.
+
+**2026-10-21 갱신**: 위 2026-10-19 추가분 중 작성일 표시(`.post-date`), 외부 링크 처리, 키보드 포커스
+표시(`:focus-visible`) 3개 항목은 오늘 개발팀이 Playwright 헤드리스 Chromium으로
+`design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해 실측했고, 마스터가 동일
+스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음, 모두 PASS). 각 항목의
+세부 실측 수치는 위 8번 항목 본문과 체크리스트 표의 "(2026-10-21 갱신)" 문단에 기록해두었다. 이에 따라
+이 3개 항목은 더 이상 "실제 렌더링 확인 못 함" 목록에 해당하지 않으며, 판정을 "코드 상 값 확인(통과)"
+에서 **"실제 렌더링까지 확인(통과)"**으로 갱신한다. 나머지 이미지 alt 항목은 이 글에 `<img>` 태그
+자체가 없어 여전히 "해당 없음"(판정 대상 부재)이며, 이번 갱신과 무관하다. 또한 명도 대비 수치 계산
+(2026-10-01 재확인분)을 비롯해 모니터·기기별 색 표현 차이, 실제 체감 대비, 글꼴 렌더링, 표 가로
+스크롤 동작 등 그 외 "확인 못 함"으로 남아 있던 항목들은 이번 실측 범위에 포함되지 않았으므로 여전히
+확인 못 함이며, 배포 후 재확인이 필요하다.
 
 ## 종합 의견
 
