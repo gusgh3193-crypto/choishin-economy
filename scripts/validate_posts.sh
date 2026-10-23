@@ -7,6 +7,8 @@
 #   2) frontmatter(--- ~ ---)에 title, meta_description, keywords, date 필드가 모두 있는가
 #   3) 본문에 이탤릭(*...*) 처리된 면책 문구(책임/투자/권장 등 키워드 포함)가 있는가
 #   4) 본문에 <img ...> 태그가 있다면 alt 속성이 존재하는가(값의 내용은 판단하지 않음)
+#   5) frontmatter의 title(60자)/meta_description(160자)이 SEO 권장 길이를
+#      초과하지 않는가(한글 포함 문자 수 기준, 2026-10-23 추가)
 #
 # 사용법:
 #   bash scripts/validate_posts.sh
@@ -191,23 +193,33 @@ for filepath in "${post_files[@]}"; do
     fi
   done
 
-  # 3-1) meta_description 길이 검사 (SEO 권장: 약 160자 전후에서 스니펫이 잘림)
-  #      이 검사는 CLAUDE.md가 정한 규칙이 아니므로 절대 FAIL 처리하지 않는다.
-  #      file_problems/overall_status에 반영하지 않고 별도의 [WARN] 메시지로만 안내한다.
-  #      한글 등 멀티바이트 문자를 바이트가 아닌 "글자 수"로 세기 위해 UTF-8 로케일에서
-  #      wc -m 으로 계산한다 (LC_ALL=C.UTF-8, 스크립트 전역 로케일에는 영향 없음).
-  meta_line="$(echo "${frontmatter}" | sed -n -E '/^meta_description:[[:space:]]*.+/{s/^meta_description:[[:space:]]*//;p;q}')"
-  if [ -n "${meta_line}" ]; then
-    if [[ "${meta_line}" =~ ^\"(.*)\"[[:space:]]*$ ]]; then
-      meta_value="${BASH_REMATCH[1]}"
-    else
-      meta_value="${meta_line}"
+  # 3-1) title / meta_description 길이 검사 (SEO 권장: 구글 검색결과 스니펫 기준으로
+  #      title은 약 60자 이내, meta_description은 약 155~160자 이내를 넘으면 검색
+  #      결과에서 잘려 보일 수 있다는 것이 흔히 쓰이는 가이드라인이다).
+  #      2026-10-23 마스터 지시로 추가/변경: 과거에는 meta_description 길이만
+  #      [WARN]으로만 안내하고 절대 FAIL 처리하지 않았으나, 검색 노출 품질을 위해
+  #      title까지 포함해 기준(title 60자, meta_description 160자)을 초과하면
+  #      FAIL 처리하도록 올린다. 한글 등 멀티바이트 문자를 바이트가 아니라
+  #      "글자 수"로 세기 위해 UTF-8 로케일에서 wc -m 으로 계산한다
+  #      (LC_ALL=C.UTF-8, 스크립트 전역 로케일에는 영향 없음).
+  LENGTH_LIMIT_title=60
+  LENGTH_LIMIT_meta_description=160
+  for length_field in title meta_description; do
+    length_field_line="$(echo "${frontmatter}" | sed -n -E "/^${length_field}:[[:space:]]*.+/{s/^${length_field}:[[:space:]]*//;p;q}")"
+    if [ -n "${length_field_line}" ]; then
+      if [[ "${length_field_line}" =~ ^\"(.*)\"[[:space:]]*$ ]]; then
+        length_field_value="${BASH_REMATCH[1]}"
+      else
+        length_field_value="${length_field_line}"
+      fi
+      length_field_count="$(LC_ALL=C.UTF-8 printf '%s' "${length_field_value}" | LC_ALL=C.UTF-8 wc -m)"
+      length_field_limit_var="LENGTH_LIMIT_${length_field}"
+      length_field_limit="${!length_field_limit_var}"
+      if [ "${length_field_count}" -gt "${length_field_limit}" ]; then
+        file_problems+=("frontmatter의 ${length_field} 길이가 ${length_field_count}자로 ${length_field_limit}자를 초과합니다 (검색 결과 스니펫에서 잘릴 수 있습니다)")
+      fi
     fi
-    meta_length="$(LC_ALL=C.UTF-8 printf '%s' "${meta_value}" | LC_ALL=C.UTF-8 wc -m)"
-    if [ "${meta_length}" -gt 160 ]; then
-      echo "[WARN] ${filename}: meta_description 길이가 ${meta_length}자로 160자를 초과합니다 (검색 결과 스니펫에서 잘릴 수 있습니다)"
-    fi
-  fi
+  done
 
   # 3-2) frontmatter의 date 필드가 파일명의 날짜와 일치하는지 검사
   #      generate_sitemap.sh/generate_jsonld.sh는 frontmatter에 date가 있으면 그 값을

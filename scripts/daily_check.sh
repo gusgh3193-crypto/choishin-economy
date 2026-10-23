@@ -73,15 +73,23 @@
 #      정의하고 있는 alt 규칙을 강제하는 검사가 없던 공백을 막기 위한
 #      단계다(posts/의 실제 파일은 건드리지 않고 임시 디렉터리에서 검증한다,
 #      2026-10-18 마스터 지시).
+#  16) title/meta_description 길이 검사 회귀 테스트 - scripts/test_meta_length.sh를
+#      실행해, validate_posts.sh에 추가된 title(60자)/meta_description(160자)
+#      길이 검사(초과하면 FAIL)가 실제로 동작하는지 검증한다. 구글 검색결과
+#      스니펫 기준 가이드라인(title 약 60자, meta_description 약 155~160자)을
+#      넘으면 검색 노출 품질이 떨어질 수 있어 2026-10-23 마스터 지시로 추가했다.
+#      한글 등 멀티바이트 문자를 바이트가 아닌 글자 수로 세는지, 기준치와 같은
+#      경계값은 초과로 보지 않는지까지 함께 검증한다(posts/의 실제 파일은
+#      건드리지 않고 임시 디렉터리에서 검증한다).
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
 # 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째,
-# 14번째, 15번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며, 기존 아홉
-# 스크립트(validate_posts.sh, generate_sitemap.sh, generate_jsonld.sh,
+# 14번째, 15번째, 16번째 검증 단계는 daily_check.sh 자체에 추가된 로직이며,
+# 기존 열 스크립트(validate_posts.sh, generate_sitemap.sh, generate_jsonld.sh,
 # test_color_palette.sh, test_split_keywords.sh, test_sitemap_dash_title.sh,
-# test_duplicate_slug.sh, test_required_date_field.sh, test_img_alt_required.sh)의
-# 내용을 건드리지 않는다.
+# test_duplicate_slug.sh, test_required_date_field.sh, test_img_alt_required.sh,
+# test_meta_length.sh)의 내용을 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -103,6 +111,7 @@ SITEMAP_DASH_TITLE_TEST_SCRIPT="${SCRIPT_DIR}/test_sitemap_dash_title.sh"
 DUPLICATE_SLUG_TEST_SCRIPT="${SCRIPT_DIR}/test_duplicate_slug.sh"
 REQUIRED_DATE_FIELD_TEST_SCRIPT="${SCRIPT_DIR}/test_required_date_field.sh"
 IMG_ALT_REQUIRED_TEST_SCRIPT="${SCRIPT_DIR}/test_img_alt_required.sh"
+META_LENGTH_TEST_SCRIPT="${SCRIPT_DIR}/test_meta_length.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
 SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 POSTS_DIR="${REPO_ROOT}/posts"
@@ -110,28 +119,28 @@ POSTS_DIR="${REPO_ROOT}/posts"
 overall_status=0
 
 echo "=========================================="
-echo "[1/15] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/16] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/15] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/16] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/15] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/16] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/15] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/16] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -163,7 +172,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/15] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/16] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -185,7 +194,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[6/15] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "[6/16] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_required_fields_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -284,7 +293,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[7/15] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
+echo "[7/16] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
 echo "=========================================="
 domain_consistency_status=0
 ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
@@ -405,7 +414,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[8/15] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
+echo "[8/16] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
 echo "=========================================="
 posts_sitemap_status=0
 if [ ! -d "${POSTS_DIR}" ]; then
@@ -495,7 +504,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[9/15] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
+echo "[9/16] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
 echo "=========================================="
 robots_validate_status=0
 if [ ! -f "${ROBOTS_FILE}" ]; then
@@ -538,47 +547,54 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[10/15] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
+echo "[10/16] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
 echo "=========================================="
 bash "${COLOR_PALETTE_TEST_SCRIPT}"
 color_palette_status=$?
 
 echo ""
 echo "=========================================="
-echo "[11/15] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
+echo "[11/16] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
 echo "=========================================="
 bash "${SPLIT_KEYWORDS_TEST_SCRIPT}"
 split_keywords_status=$?
 
 echo ""
 echo "=========================================="
-echo "[12/15] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
+echo "[12/16] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
 echo "=========================================="
 bash "${SITEMAP_DASH_TITLE_TEST_SCRIPT}"
 sitemap_dash_title_status=$?
 
 echo ""
 echo "=========================================="
-echo "[13/15] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
+echo "[13/16] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
 echo "=========================================="
 bash "${DUPLICATE_SLUG_TEST_SCRIPT}"
 duplicate_slug_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[14/15] date 필드 필수 검출 회귀 테스트를 실행합니다: test_required_date_field.sh"
+echo "[14/16] date 필드 필수 검출 회귀 테스트를 실행합니다: test_required_date_field.sh"
 echo "=========================================="
 bash "${REQUIRED_DATE_FIELD_TEST_SCRIPT}"
 required_date_field_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[15/15] img alt 속성 필수 검출 회귀 테스트를 실행합니다: test_img_alt_required.sh"
+echo "[15/16] img alt 속성 필수 검출 회귀 테스트를 실행합니다: test_img_alt_required.sh"
 echo "=========================================="
 bash "${IMG_ALT_REQUIRED_TEST_SCRIPT}"
 img_alt_required_test_status=$?
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ] || [ ${required_date_field_test_status} -ne 0 ] || [ ${img_alt_required_test_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[16/16] title/meta_description 길이 검사 회귀 테스트를 실행합니다: test_meta_length.sh"
+echo "=========================================="
+bash "${META_LENGTH_TEST_SCRIPT}"
+meta_length_test_status=$?
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ] || [ ${required_date_field_test_status} -ne 0 ] || [ ${img_alt_required_test_status} -ne 0 ] || [ ${meta_length_test_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -609,6 +625,7 @@ echo "12) sitemap '--' 제목 주석 생략 회귀 테스트 (test_sitemap_dash_
 echo "13) 슬러그 중복 검출 회귀 테스트 (test_duplicate_slug.sh) : $(status_label ${duplicate_slug_test_status})"
 echo "14) date 필드 필수 검출 회귀 테스트 (test_required_date_field.sh) : $(status_label ${required_date_field_test_status})"
 echo "15) img alt 속성 필수 검출 회귀 테스트 (test_img_alt_required.sh) : $(status_label ${img_alt_required_test_status})"
+echo "16) title/meta_description 길이 검사 회귀 테스트 (test_meta_length.sh) : $(status_label ${meta_length_test_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
