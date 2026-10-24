@@ -10,6 +10,11 @@
 #     (frontmatter에 date 필드가 있으면 그 값을 datePublished로 우선 사용한다.)
 #   - frontmatter의 title은 headline으로, meta_description은 description으로,
 #     keywords는 keywords 배열로 사용한다.
+#   - frontmatter에 category 필드가 있으면 schema.org BlogPosting의
+#     articleSection 값으로 반영한다(2026-10-24 마스터 지시). category가
+#     없는 글(과거 글/향후 글)에서는 articleSection 자체를 생성하지 않고
+#     건너뛴다(빈 문자열로 채우지 않음). validate_posts.sh의 REQUIRED_FIELDS에는
+#     포함하지 않은 선택적 필드이므로, 있을 때만 반영하는 패턴을 그대로 따른다.
 #   - 도메인은 아직 정해지지 않았으므로 플레이스홀더(https://example.com)를
 #     사용하고, 실제 도메인으로 교체해야 함을 명시한다.
 #     # TODO: 실제 도메인으로 교체 필요
@@ -194,6 +199,12 @@ for filepath in "${post_files[@]}"; do
   fi
   author_name_escaped="$(json_escape "${author_name}")"
 
+  # category (frontmatter에 있으면 articleSection으로 반영, 없으면 생성하지 않음)
+  category_line="$(echo "${frontmatter}" | grep -E '^category:' | head -n 1)"
+  fm_category="${category_line#category:}"
+  fm_category="$(echo "${fm_category}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')"
+  category_escaped="$(json_escape "${fm_category}")"
+
   output_file="${JSONLD_DIR}/${slug}.json"
 
   {
@@ -205,6 +216,9 @@ for filepath in "${post_files[@]}"; do
     echo "  \"datePublished\": \"${date_published}\","
     echo "  \"dateModified\": \"${date_modified}\","
     echo "  \"keywords\": ${keywords_json},"
+    if [ -n "${fm_category}" ]; then
+      echo "  \"articleSection\": \"${category_escaped}\","
+    fi
     echo "  \"url\": \"${post_url}\","
     echo "  \"author\": {"
     echo "    \"@type\": \"${author_type}\","
