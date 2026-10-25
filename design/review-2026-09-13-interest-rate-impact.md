@@ -204,6 +204,13 @@ PASS이나, 이 글의 현재 콘텐츠로는 가로 스크롤이 실제로 트�
   열어 확인했다. 48~51번째 줄 `<thead><tr><th scope="col">항목</th><th scope="col">금리 인상 시
   영향</th></tr></thead>`에서 두 헤더 셀 모두 `<th scope="col">`로 마크업되어 있음을 확인했다. 가이드
   8번 기준 충족.
+  **(2026-10-25 갱신) 실제 렌더링까지 확인(통과)** — 오늘 개발팀이 Playwright 헤드리스 Chromium으로
+  `design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해 `document.querySelectorAll('th')`로
+  실제 DOM에서 직접 조회(소스 코드 Read가 아님)했고, 마스터가 동일 스크립트를 직접 재실행해 같은 결과를
+  재확인했다(저장소 CSS/HTML 파일 변경 없음). 실측 결과: th 개수 2개, index 0은 텍스트 "항목"에
+  `getAttribute('scope')` = `"col"`, index 1은 텍스트 "금리 인상 시 영향"에 `getAttribute('scope')` =
+  `"col"`로, 두 헤더 셀 모두 실제 렌더링된 DOM에서 `scope="col"`이 반영됨을 확인했다. 이에 따라 이
+  항목의 판정을 "코드 상 값 확인(통과)"에서 **"실제 렌더링까지 확인(통과)"**로 갱신한다.
 - **폰트 rem 단위 — 통과(코드 상 값 확인, 2026-09-28 재확인)**: `design/site.css` 20~21번째 줄 `html {
   font-size: 100%; }`, 31번째 줄 `body { font-size: 1rem; }`, 그 외 `h1`(50번째 줄 `2rem`), `h2`(56번째
   줄 `1.4rem`), `h3`(65번째 줄 `1.15rem`) 등 확인한 폰트 크기 선언이 모두 `rem` 단위로 되어 있어(20번째
@@ -224,6 +231,21 @@ PASS이나, 이 글의 현재 콘텐츠로는 가로 스크롤이 실제로 트�
   렌더링되는 것을 직접 본" 확인은 아니다.** 사이트가 아직 배포되지 않았으므로 실제 화면에서의 색상
   렌더링(모니터·기기별 색 표현 차이, 실제 체감 대비 등)은 여전히 확인 못 함이며, 배포 후 재확인이
   필요하다.
+  **(2026-10-25 갱신) 실제 렌더링까지 확인(통과)** — 오늘 개발팀이 Playwright 헤드리스 Chromium으로
+  `design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해 computed style을 직접 조회했고,
+  마스터가 동일 스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음). 8개
+  항목(`body` color/background-color, `h1` color, 통계청 외부 링크 color, `.disclaimer` color/
+  background-color, `th` color/background-color) 전부에서 실제 렌더링 computed 값이 CSS 변수 선언값과
+  정확히 일치했다: `body` color `rgb(51, 51, 51)` = `--color-text` `#333333`, `body`
+  background-color `rgb(255, 255, 255)` = `--color-bg` `#FFFFFF`, `h1` color `rgb(26, 26, 26)` =
+  `--color-heading` `#1A1A1A`, 통계청 외부 링크 color `rgb(11, 95, 165)` = `--color-link` `#0B5FA5`,
+  `.disclaimer` color `rgb(107, 62, 0)` = `--color-warning-text` `#6B3E00`, `.disclaimer`
+  background-color `rgb(255, 243, 224)` = `--color-warning-bg` `#FFF3E0`, `th` color
+  `rgb(51, 51, 51)` = `--color-table-header-text` `#333333`, `th` background-color
+  `rgb(240, 240, 240)` = `--color-table-header-bg` `#F0F0F0`. 불일치 없음(8개 전부 PASS). 즉
+  2026-10-01에 이미 계산되어 있던 `design/color-palette.md` 2-2번의 대비비 수치들이 실제로 렌더링되는
+  색상에도 그대로 적용된다는 것이 실측으로 확인됐다. 이에 따라 이 항목의 판정을 "코드 상 값 확인(통과)"
+  에서 **"실제 렌더링까지 확인(통과)"**로 갱신한다.
 - **면책 문구(이탤릭 단독 사용)**: 실제 글 마지막 줄이 `*...*` 이탤릭 하나로만 강조되어 있음을 재확인했다.
   가이드 8번 항목이 이미 "이탤릭만으로는 저시력 사용자에게 불리할 수 있어 향후 CSS에서 배경색 박스/아이콘
   병행을 검토하라"고 명시해 두었다. 2026-09-28 재확인 결과, `design/mockup-2026-09-13-interest-rate-impact.html`
@@ -329,7 +351,7 @@ PASS이나, 이 글의 현재 콘텐츠로는 가로 스크롤이 실제로 트�
 | 목록은 (a) 3개 이상 병렬 나열, 또는 (b) 라벨로 구분한 2개 내외일 때 사용 | 통과(해소됨) | 2026-09-14 지적한 체크리스트·본문 모순은 style-guide.md에 이미 반영되어 해소, 이 글의 불릿(예시/대응 방법)은 (b)에 해당 |
 | 볼드는 단락당 최소한(핵심 수치·라벨 1개 내외) | 통과 | 볼드 0회, 남용 없음(단, 기존 개선 제안 미반영 상태 유지) |
 | 코드 블록은 계산식/공식/정확한 수치 예시에만 사용 | 해당 없음 | 이 글에는 인라인 코드·펜스 코드 블록이 전혀 없어 규칙이 적용될 대상 자체가 없음(위반 아님) |
-| 본문 16px 이상, 명도 대비 4.5:1 이상, 표 `<th scope="col">` | 본문 폰트·`<th scope>`·명도 대비 모두 코드 상 값 확인(통과) → **(2026-10-22 갱신) 본문 폰트 크기 및 `.page` 좌우 padding은 실제 렌더링까지 확인(통과); `<th scope>`·명도 대비는 이번 점검 범위 밖으로 여전히 코드 상 값 확인(통과)만 유지** | `design/site.css` 31번째 줄 `body { font-size: 1rem; }`(html 100%=16px 기준), `.page` 40번째 줄 `padding: 32px 16px 64px`(좌우 16px)로 가이드 충족을 코드상 확인. mockup.html 49~50번째 줄 `<th scope="col">` 2개 모두 적용 확인. 명도 대비는 `design/site.css` 4~12번째 줄 `:root` 색상 변수 9개가 `design/color-palette.md` 2-2번 계산 결과(모두 4.5:1 이상, 6.57:1~17.41:1)와 일치함을 대조해 코드상 값 확인(2026-10-01). 모든 항목의 실제 브라우저 렌더링은 사이트 미배포로 확인 못 함. **(2026-10-22) Playwright 실측(375×667/320×667): body computed font-size 16px로 실제 렌더링 확인(가이드 기준 16px 이상 충족), `.page` computed paddingLeft 16px·paddingRight 16px로 실제 렌더링 확인(가이드 기준 16px 이상 충족). `<th scope>` 적용과 명도 대비 실측은 이번 Playwright 점검 범위에 포함되지 않아 기존과 동일하게 코드 상 값 확인(통과)으로 남아 있으며 여전히 확인 못 함** |
+| 본문 16px 이상, 명도 대비 4.5:1 이상, 표 `<th scope="col">` | 본문 폰트·`<th scope>`·명도 대비 모두 **실제 렌더링까지 확인(통과)** (2026-10-25 갱신) | `design/site.css` 31번째 줄 `body { font-size: 1rem; }`(html 100%=16px 기준), `.page` 40번째 줄 `padding: 32px 16px 64px`(좌우 16px)로 가이드 충족을 코드상 확인. mockup.html 49~50번째 줄 `<th scope="col">` 2개 모두 적용 확인. 명도 대비는 `design/site.css` 4~12번째 줄 `:root` 색상 변수 9개가 `design/color-palette.md` 2-2번 계산 결과(모두 4.5:1 이상, 6.57:1~17.41:1)와 일치함을 대조해 코드상 값 확인(2026-10-01). **(2026-10-22) Playwright 실측(375×667/320×667): body computed font-size 16px로 실제 렌더링 확인(가이드 기준 16px 이상 충족), `.page` computed paddingLeft 16px·paddingRight 16px로 실제 렌더링 확인(가이드 기준 16px 이상 충족).** **(2026-10-25) Playwright 실측: `<th scope>`는 `document.querySelectorAll('th')` DOM 조회 결과 th 2개 모두 `getAttribute('scope') === "col"` 확인(실제 렌더링까지 확인·통과). 명도 대비는 computed style 8개 항목(body color/bg, h1 color, 외부 링크 color, `.disclaimer` color/bg, th color/bg) 전부가 CSS 변수 선언값과 정확히 일치(불일치 없음, 8개 전부 PASS) — 예: body color `rgb(51,51,51)`=`--color-text` `#333333`, 외부 링크 color `rgb(11,95,165)`=`--color-link` `#0B5FA5`. 이에 따라 두 항목 모두 "코드 상 값 확인(통과)"에서 "실제 렌더링까지 확인(통과)"로 갱신됨** |
 | 작성일 표시(`.post-date`), H1 바로 아래·리드 단락 위에 "YYYY-MM-DD 작성" 형식 (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | mockup.html 14~18번째 줄에서 `<h1>`(14행) → `<p class="post-date">2026-09-13 작성</p>`(16행) → 리드 단락(18행) 순서 확인. `design/site.css` 57~61번째 줄 `.post-date { font-size: 0.9rem; ... }`로 본문보다 작게 선언됨을 코드상 확인. 날짜 값은 `posts/2026-09-13-interest-rate-impact.md` 5행 프런트매터 `date: 2026-09-13`과 일치. **(2026-10-21) Playwright 실측: `.post-date` computed font-size 14.4px vs 리드 `<p>` 16px, DOM 순서 `h1→.post-date→리드 p` 실측 확인(true/true)** |
 | 외부 링크는 `target="_blank" rel="noopener noreferrer"` 적용, 내부 링크와 시각적 구분 안 함 (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | mockup.html 35번째 줄 `<a href="https://kostat.go.kr" target="_blank" rel="noopener noreferrer">통계청</a>`에서 세 속성 모두 확인. `design/site.css`에 외부 링크 전용 스타일 없이 91~95번째 줄 공통 `a` 규칙만 적용됨을 확인해 "시각적 구분 안 함" 기준 충족. 단, 원문 마크다운(`posts/2026-09-13-interest-rate-impact.md` 26행)에는 이 링크 문장 자체가 없어 mockup.html 단계에서만 추가된 것으로 보임(참고 사항, 위반 아님). **(2026-10-21) Playwright 실측: DOM 속성 target/rel/href 유지 확인, computed color rgb(11,95,165)·underline·font-weight 400, 별도 강조 스타일 없음 확인(hasOtherLink: false)** |
 | 키보드 포커스 표시(`:focus-visible` 아웃라인, WCAG 2.4.7) (2026-10-19 추가) | 코드 상 값 확인(통과) → **(2026-10-21 갱신) 실제 렌더링까지 확인 — 통과** | `design/site.css` 102~105번째 줄 `a:focus-visible { outline: 2px solid var(--color-link); outline-offset: 2px; }`로 가이드가 지정한 `--color-link`(6.57:1 검증됨) 재사용을 코드상 확인. **(2026-10-21) Playwright 실측: 실제 Tab 키 2회 입력으로 외부 링크 포커스, `:focus-visible` matches: true, computed outline 2px solid rgb(11,95,165) offset 2px(CSS 선언과 일치), 스크린샷 육안 확인으로도 밑줄과 분리된 파란 아웃라인 확인** |
@@ -380,6 +402,24 @@ clientWidth가 같아(343=343, 288=288) 가로 스크롤이 실제로 트리거�
 발생하지 않음"으로 구분해 기록한다. 레이아웃 깨짐(요소 겹침, 가로 넘침으로 인한 잘림 등)은 스크린샷
 육안 확인 결과 없었다(PASS). 이번 실측 범위에 포함되지 않은 항목(표 `<th scope>` 적용, 명도 대비 실측,
 글꼴 렌더링 체감 등)은 여전히 확인 못 함으로 남아 있으며, 배포 후 재확인이 필요하다.
+
+**2026-10-25 갱신**: 위 2026-10-22 갱신분에서 "이번 실측 범위에 포함되지 않아 여전히 확인 못 함"으로
+남겨두었던 두 항목 — 8번(접근성) 섹션의 명도 대비(색상)와 표 `<th scope="col">` 적용 — 을 오늘 개발팀이
+Playwright 헤드리스 Chromium으로 `design/mockup-2026-09-13-interest-rate-impact.html`을 실제로 렌더링해
+실측했고, 마스터가 동일 스크립트를 직접 재실행해 같은 결과를 재확인했다(저장소 CSS/HTML 파일 변경 없음).
+명도 대비는 `body`/`h1`/통계청 외부 링크/`.disclaimer`/`th`의 color·background-color 8개 항목 전부에서
+실제 렌더링 computed 값이 CSS 변수 선언값과 정확히 일치했다(예: body color `rgb(51,51,51)` =
+`--color-text` `#333333`, 외부 링크 color `rgb(11,95,165)` = `--color-link` `#0B5FA5`, `th`
+background-color `rgb(240,240,240)` = `--color-table-header-bg` `#F0F0F0`; 불일치 없음, 8개 전부 PASS).
+`<th scope="col">`는 `document.querySelectorAll('th')`로 실제 DOM을 직접 조회해 th 2개(텍스트 "항목",
+"금리 인상 시 영향") 모두 `getAttribute('scope')`가 `"col"`로 반영됨을 확인했다. 세부 수치는 위 8번
+항목 본문의 "(2026-10-25 갱신)" 문단과 체크리스트 표에 기록해두었다. 이에 따라 두 항목 모두 "코드 상
+값 확인(통과)"에서 **"실제 렌더링까지 확인(통과)"**로 갱신한다. 이번 갱신으로 8번(접근성) 섹션에서
+사이트 미배포로 인해 "실제 렌더링 확인 못 함"으로 남아 있던 항목은 모두 해소되었다(작성일 표시·외부
+링크 처리·키보드 포커스 표시는 2026-10-21 갱신, 명도 대비·`<th scope>`는 이번 2026-10-25 갱신). 다만
+모니터·기기별 색 표현 차이, 실제 체감 대비, 글꼴 렌더링 등 더 넓은 범위의 실기기 확인은 이번 실측
+범위(Playwright 헤드리스 Chromium 단일 환경)를 벗어나므로 여전히 확인 못 함이며, 실제 배포 후 재확인이
+필요하다.
 
 ## 종합 의견
 
