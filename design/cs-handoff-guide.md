@@ -41,7 +41,7 @@ CS팀은 `cs/inquiry-log.md` 3번("개발팀·기획팀·디자인팀 전달용 
 - **표/코드 블록 구조**: style-guide.md 3번(표), 6번(코드 블록), 8번(표 접근성 `<th scope="col">`)
   기준.
 - **색상 값 자체**: color-palette.md 1번 "팔레트 요약 표"에 정의된 실제 hex 코드
-  (`--color-text: #333333`, `--color-link: #0B5FA5` 등, 4번 CSS 변수 제안 참고).
+  (`--color-text: #333333`, `--color-link: #0B5FA5` 등, 4번 구현 현황(CSS 변수) 참고).
 
 ### 2단계: "확인된 이슈"인지 "단순 의견"인지 분류한다
 
