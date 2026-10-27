@@ -168,3 +168,34 @@ CS팀이 `cs/` 문서들에 해온 "문서 자체 점검" 방식을 디자인팀
    문서 안에서 날짜가 언급된 곳(5행 "2026-09-26부터", 118행 "최초 구현 2026-09-26")은 모두
    `design/site.css` 구현 시점을 가리키는 서술이며, 이 문서 자신의 작성일 주장이 아니므로 대조할
    대상 자체가 없다. **이상 없음.**
+
+---
+
+## 문서-구현 정적 대조 점검 (2026-10-27)
+
+지금까지는 `design/` 문서 간(md↔md) 상호참조만 점검했다. 이번이 처음으로 실제 구현 파일
+`design/site.css`의 hex 값을 이 문서의 1번·4번 섹션과 한 줄씩 대조한 점검이다.
+
+1. **1번(팔레트 요약 표) ↔ `site.css` `:root`**: 표의 10개 행(배경·본문·H1·H2·링크 방문
+   전/후·면책 배경/텍스트·표 헤더 배경/텍스트) 중 H1과 H2는 동일 색상(`#1A1A1A`, 동일
+   변수 `--color-heading`)을 공유하므로 실질적으로 9개 변수와 대응한다. `site.css` 3~13행
+   `:root` 블록의 9개 변수(`--color-bg`, `--color-text`, `--color-heading`, `--color-link`,
+   `--color-link-visited`, `--color-warning-bg`, `--color-warning-text`,
+   `--color-table-header-bg`, `--color-table-header-text`)를 하나씩 대조한 결과 hex 값이
+   전부 정확히 일치했다(대소문자 표기까지 전부 대문자로 동일). **이상 없음.**
+2. **4번(구현 현황 CSS 변수 코드 블록) ↔ `site.css` `:root`**: 4번 섹션에 적힌 9개 변수
+   선언을 `site.css` 3~13행과 한 줄씩 대조했다. 변수명·순서·hex 값 모두 정확히 일치했다.
+   **이상 없음.**
+3. **2-2번(대비비 계산 결과) ↔ 실제 CSS 색상 사용처**: `site.css`에서 각 색상 변수가 실제로
+   어떤 전경/배경 조합으로 쓰이는지 확인했다(본문 `--color-text`/배경 `--color-bg`, 링크
+   `--color-link`·`--color-link-visited`/배경 `--color-bg`, 면책 박스 `--color-warning-text`/
+   `--color-warning-bg`, 표 헤더 `--color-table-header-text`/`--color-table-header-bg`, 그리고
+   `code`/`pre`가 표 헤더와 동일한 `--color-table-header-bg`+`--color-text` 조합을 재사용).
+   모두 2-2번 표에 이미 계산된 조합과 정확히 같아 별도 대비비 재계산 없이도 통과 상태를
+   유지함을 확인했다. **이상 없음.**
+4. **발견한 불일치**: 색상 hex 값 자체의 불일치는 0건이었다. 다만 색상이 아니라
+   `design/style-guide.md` 8번(접근성)의 폰트 크기 규칙과 대조하는 과정에서 `site.css` 151행
+   `.disclaimer { font-size: 0.95rem; }`이 "본문 기본 16px 이상" 규칙보다 작게 설정돼 있던
+   것을 발견했다(상세 근거는 `design/style-guide.md` 쪽 2026-10-27 점검 기록 참고). 이 문서의
+   색상·대비비 값 자체와는 무관한 사안이므로 `site.css`의 해당 줄만 `1rem`으로 수정했고, 이
+   문서(1번·2-2번·4번)는 수정할 필요가 없었다.

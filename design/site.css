@@ -141,14 +141,19 @@
     font-weight: bold;
   }
 
-  /* style-guide.md 5번/8번, color-palette.md 1번·2-2번: 면책 문구는 시각적으로 분리된 박스 */
+  /* style-guide.md 5번/8번, color-palette.md 1번·2-2번: 면책 문구는 시각적으로 분리된 박스.
+     폰트 크기는 0.95rem(15.2px)으로 두었던 것을 1rem(16px)로 수정했다(2026-10-27 정적
+     대조 점검). 면책 문구는 post-date/caption처럼 "본문보다 작게 두라"는 별도 지시가
+     style-guide.md에 없고, 오히려 투자 유의를 알리는 본문 성격의 서술 문단이므로
+     8번(접근성)·7번(모바일 가독성)의 "본문 기본 16px 이상" 일반 규칙이 그대로 적용돼야
+     한다고 판단했다. */
   .disclaimer {
     background-color: var(--color-warning-bg);
     color: var(--color-warning-text);
     padding: 16px;
     border-radius: 6px;
     margin-top: 40px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     line-height: 1.7;
   }
 
