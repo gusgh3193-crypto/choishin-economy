@@ -9,6 +9,8 @@
 #   4) 본문에 <img ...> 태그가 있다면 alt 속성이 존재하는가(값의 내용은 판단하지 않음)
 #   5) frontmatter의 title(60자)/meta_description(160자)이 SEO 권장 길이를
 #      초과하지 않는가(한글 포함 문자 수 기준, 2026-10-23 추가)
+#   6) frontmatter에 category 필드가 있다면 값이 비어있거나 공백뿐이지 않은가
+#      (category 필드 자체가 없는 것은 선택적 필드이므로 허용, 2026-10-28 추가)
 #
 # 사용법:
 #   bash scripts/validate_posts.sh
@@ -192,6 +194,25 @@ for filepath in "${post_files[@]}"; do
       fi
     fi
   done
+
+  # 3-6) category 필드가 존재하지만 값이 비어 있거나 공백뿐인 경우를 검사한다.
+  #      category는 REQUIRED_FIELDS에 포함되지 않은 선택적 필드다. generate_jsonld.sh가
+  #      이 값을 articleSection으로 반영하며, 필드 자체가 없는 글은 articleSection을
+  #      생성하지 않는 것이 정상 설계(2026-10-24)이므로 여기서도 FAIL 처리하지 않는다.
+  #      다만 category: "" 또는 category: "   " 처럼 필드는 존재하지만 값이 비어
+  #      있거나 공백뿐이면, generate_jsonld.sh의 "-n" 검사(공백 문자열도 비어있지
+  #      않은 것으로 판단)를 통과해 공백만 있는 articleSection이 그대로 생성되어버린다
+  #      (2026-10-28 조사 확인). 허용 카테고리 목록(enum) 강제처럼 범위가 큰 검증은
+  #      하지 않고, "비어있지 않은지"만 보는 최소 검증이다(2026-10-28 조사 후 추가).
+  category_line_raw="$(echo "${frontmatter}" | grep -E '^category:' | head -n 1)"
+  if [ -n "${category_line_raw}" ]; then
+    category_value="${category_line_raw#category:}"
+    category_value="$(echo "${category_value}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')"
+    category_trimmed="$(echo "${category_value}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    if [ -z "${category_trimmed}" ]; then
+      file_problems+=("frontmatter에 'category' 필드가 있지만 값이 비어 있거나 공백뿐입니다")
+    fi
+  fi
 
   # 3-1) title / meta_description 길이 검사 (SEO 권장: 구글 검색결과 스니펫 기준으로
   #      title은 약 60자 이내, meta_description은 약 155~160자 이내를 넘으면 검색
