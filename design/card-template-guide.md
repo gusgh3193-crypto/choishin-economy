@@ -451,3 +451,126 @@ aspect-ratio가 1080px 폭 고정에서도 4:5=1350px 높이로 정확히 변환
 단, 이때 사용한 측정 스크립트와 스크린샷 자체는 개발팀의 세션 스크래치 디렉터리에만
 있고 저장소에는 커밋되지 않았다(과거 2026-10-13/14 검증과 동일한 방식) — `design/`
 폴더에는 이번 검증으로 인한 CSS/HTML 파일 변경이 없음을 `git status`/`git diff`로 확인했다.
+
+---
+
+## `card-template.html` ↔ 규칙 문서 정적 대조 점검 (2026-10-28)
+
+지금까지 이 문서에 쌓인 점검들은 모두 "특정 과제(폰트 크기, h1 태그, 글자 수, 오버플로)"를
+계기로 그때그때 발견된 문제를 다룬 것이었다. 이번이 처음으로 `design/card-template.html`
+전체를 이 문서(`card-template-guide.md`)·`design/color-palette.md`·`design/style-guide.md`
+세 문서와 항목별로 한 줄씩 대조한 **전면 정적 대조**다(`design/site.css`를
+`color-palette.md`·`style-guide.md`와 대조한 2026-10-27 점검과 같은 방식을 카드뉴스
+템플릿에 처음 적용).
+
+### 1. 색상 — `color-palette.md` 1번·4번 ↔ 실제 CSS 변수 참조
+
+이 문서 "재사용한 색상" 표(위 14~32행)가 주장하는 매핑을 `card-template.html` 각 셀렉터의
+실제 선언과 하나씩 대조했다.
+
+| 셀렉터 | 실제 값(`card-template.html`) | 매핑 주장 | `color-palette.md` 1번 hex | 일치 |
+|---|---|---|---|---|
+| `.card` | `background-color: var(--color-bg)` (70행) | `--color-bg` | `#FFFFFF` | 일치 |
+| `.card`, `.card-summary`, `.card-points`, `.card-footer`, `.card-slot-label` | `color: var(--color-text)` (71, 56, 108, 117, 144행) | `--color-text` | `#333333` | 일치 |
+| `.card-title` | `color: var(--color-heading)` (101행) | `--color-heading` | `#1A1A1A` | 일치 |
+| `.card-eyebrow` | `color: var(--color-link)` (90행) | `--color-link` | `#0B5FA5` | 일치 |
+| `.preview-note`, `.card-disclaimer` | `background-color/color: var(--color-warning-bg/-text)` (30~31, 129~130행) | `--color-warning-bg`/`--color-warning-text` | `#FFF3E0`/`#6B3E00` | 일치 |
+
+새로운 hex 리터럴은 CSS 변수 선언부(`site.css`) 바깥에서 쓰인 적이 없고, `card-template.html`
+은 전부 `var(--color-*)` 참조만 쓴다. `site.css`의 `:root` 값은 2026-10-27 점검에서 이미
+`color-palette.md`와 100% 일치함을 확인했으므로, 변수 참조 체인 전체가 `color-palette.md`와
+일치한다. **불일치 0건.**
+
+별도 리터럴 색상 2곳(`border: 1px solid #DDDDDD;`, 79·148행)은 텍스트 색이 아니라 테두리
+색이므로 대비(contrast) 기준 대상이 아니며, `site.css` 133행 `th, td { border: 1px solid
+#DDDDDD; }`과 동일한 값을 재사용한다는 주석(79행)이 실제 `site.css` 값과 일치함을 확인했다.
+**불일치 0건.**
+
+### 2. 명도 대비 — `color-palette.md` 2-2번 ↔ 실제 전경/배경 조합
+
+`card-template.html`에서 쓰인 전경/배경 조합을 모두 나열해 2-2번 표의 계산값과 대조했다.
+
+| 조합(카드뉴스에서 쓰인 곳) | `color-palette.md` 2-2번 대비비 | 기준 | 판정 |
+|---|---|---|---|
+| `#333333`/`#FFFFFF` (card-summary 등) | 12.63:1 | 4.5:1 | 통과 |
+| `#1A1A1A`/`#FFFFFF` (card-title) | 17.41:1 | 4.5:1(큰 텍스트 3:1) | 통과 |
+| `#0B5FA5`/`#FFFFFF` (card-eyebrow, 라벨 용도) | 6.57:1 | 4.5:1 | 통과 |
+| `#6B3E00`/`#FFF3E0` (card-disclaimer, preview-note) | 8.28:1 | 4.5:1 | 통과 |
+
+새로 조합된 전경/배경 쌍이 없으므로 별도 재계산 없이 전부 기존 통과 상태를 그대로 물려받는다.
+**불일치 0건.**
+
+### 3. 폰트 크기 — `style-guide.md` 7·8번 + 이 문서 "카드뉴스 폰트 크기 재점검" 섹션 ↔ 실제 값
+
+| 셀렉터 | 실제 `font-size` | 이 문서가 정한 기준값(위 "수정 내역" 표) | 일치 |
+|---|---|---|---|
+| `.preview-note` | `1rem` (34행) | `1rem` | 일치 |
+| `.card-slot-label` | `1rem` (57행) | `1rem` | 일치 |
+| `.card-eyebrow` | `1rem`, `font-weight: bold` (92, 95행) | `1rem` (볼드로 위계 구분) | 일치 |
+| `.card-title` | `1.6rem` (103행) | `1.6rem`(변경 없음) | 일치 |
+| `.card-summary` | `1rem` (110행) | `1rem`(변경 없음) | 일치 |
+| `.card-points` | `1rem` (119행) | `1rem` | 일치 |
+| `.card-disclaimer` | `1rem` (134행) | `1rem` | 일치 |
+| `.card-footer` | `1rem` (146행) | `1rem` | 일치 |
+
+전부 `style-guide.md` 7·8번의 "본문 16px 이상" 기준과 이 문서가 2026-10-08에 세운 카드뉴스용
+기준을 충족한다. **불일치 0건** — 과거 수정이 그대로 유지되고 있음을 재확인했다.
+
+### 4. `<h1>` → `<p>` 변경 — 이 문서 "제목 태그 규칙" 섹션 ↔ 실제 마크업
+
+2026-10-11 변경 내역(`<h1 class="card-title">` → `<p class="card-title">`)이 실제 파일에
+그대로 남아 있는지 확인했다. `card-template.html` 170행·194행 모두 `<p class="card-title">`이고,
+문서 전체에 `<h1>` 태그는 한 번도 쓰이지 않았다(검색 결과 0건). `.card-title` 클래스의 CSS
+선언(`font-size: 1.6rem`, `line-height: 1.4`, `margin: 0 0 16px`, `color: var(--color-heading)`,
+101~106행)도 변경되지 않고 그대로다. **불일치 0건.**
+
+### 5. 비율·치수 — 이 문서 "비율/크기 근거" 섹션 ↔ 실제 CSS
+
+`.card.ratio-1-1 { aspect-ratio: 1 / 1; }`(82~84행, 주석 "1080x1080px 기준")과
+`.card.ratio-4-5 { aspect-ratio: 4 / 5; }`(86~88행, 주석 "1080x1350px 기준")이 가이드가 말하는
+정방형(1080×1080)·4:5(1080×1350) 비율과 정확히 일치한다. `.card { width: min(90vw, 440px); }`
+(70행)도 가이드가 2026-10-09에 "vmin"에서 정정한 "vw 기반" 설명과 일치한다(주석 65행에도
+"vw"로 명시돼 있어 코드-주석-가이드 3자가 모두 일치). **불일치 0건.**
+
+### 6. 폰트 패밀리 — `.card` ↔ `site.css` `body`
+
+`.card { font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }`
+(73행)과 `site.css` 27행 `body { font-family: -apple-system, "Apple SD Gothic Neo",
+"Malgun Gothic", sans-serif; }`을 글자 단위로 대조했다. 완전히 동일하다. **불일치 0건.**
+
+### 7. 플레이스홀더 자리 구조 — "마케팅팀 스크립트가 오면 교체할 자리" 표 ↔ 실제 마크업
+
+표에 정의된 7개 자리(라벨, 제목, 요약, 세부 포인트, 면책 문구, 워드마크/로고, 순번)가
+`card-template.html`의 두 카드 슬롯(163~209행) 모두에 빠짐없이 존재하는지 확인했다. 전부
+존재했고, 세부 포인트 `<li>` 3개 중 3번째에는 "필요 없으면 삭제"라는 안내가 포함돼 있어
+2026-10-13/14 오버플로 재조정 권고("불릿 2개 권장")와도 모순되지 않는다(3개를 기본값으로
+두되 선택적으로 줄일 수 있게 한 것). **불일치 0건.**
+
+### 발견한 불일치 — 0건 (기존 수정 내역이 모두 유지됨을 재확인)
+
+색상·명도 대비·폰트 크기·제목 태그·비율·폰트 패밀리·플레이스홀더 구조 7개 항목 모두
+세 기준 문서(`card-template-guide.md`, `color-palette.md`, `style-guide.md`)와 정확히
+일치했다. 이번 점검에서는 **수정이 필요한 새 불일치를 발견하지 못했다** — 2026-10-08
+(폰트 크기), 2026-10-09(vmin→vw 주석), 2026-10-11(h1→p), 2026-10-13/14(글자 수·오버플로
+재조정)에 이미 적용된 수정들이 지금도 그대로 파일에 남아 있음을 재확인한 결과다.
+
+### 애매함/범위 밖으로 남긴 항목 (수정하지 않음)
+
+- **줄 간격(line-height)**: `.card-title`은 `line-height: 1.4`(104행), `.card-disclaimer`는
+  `line-height: 1.5`(137행)인데, `style-guide.md` 2번("단락 간 줄 간격 1.7~1.8배 권장")과
+  8번("WCAG 1.4.8, 줄 간격 1.5배 이상")은 문서 맨 위에 명시된 분석 대상
+  (`posts/2026-09-13-interest-rate-impact.md`, 즉 블로그 **본문 문단**)을 근거로 만들어진
+  규칙이다. 이 문서(`card-template-guide.md`)는 폰트 크기에 대해서는 "카드뉴스는 고정 캔버스로
+  내보내는 이미지라 reflow 전제가 다르다"는 독자적 근거를 세워 16px 기준을 별도로 재확인했지만
+  (위 "카드뉴스 폰트 크기 재점검" 섹션), **줄 간격에 대해서는 같은 방식의 독자적 판단을 아직
+  세운 적이 없다**. `.card-title`의 1.4는 오히려 `site.css` 45행 `h1, h2 { line-height: 1.4; }`
+  패턴과 일치하는 값이라 "카드뉴스만의 실수"라고 단정하기도 어렵다. 즉 "명백한 실수"로 보기
+  애매하고, 고치려면 카드뉴스용 줄 간격 기준을 별도로 제정해야 하는 범위가 더 큰 판단이
+  필요하므로, 이번에는 고치지 않고 **애매함**으로만 남긴다. 참고로 `.card-disclaimer`의 1.5는
+  WCAG 1.4.8의 "1.5배 이상" 기준을 그 자체로는 충족한다(경계값 포함).
+- **`.card-points` 세부 포인트 3개 vs 2개 권장**: 위 7번에서 확인했듯 현재 템플릿은 기본값
+  3개 `<li>`를 유지하고 있다. 2026-10-13/14 오버플로 재조정은 "구조적 축소(3개→2개 권장)"를
+  제안했지만, 이는 실제 문구가 채워졌을 때 오버플로를 피하기 위한 **권장**이지 템플릿 기본
+  마크업 자체를 지금 2개로 줄여야 한다는 강제 규칙은 아니다(마케팅팀 문구가 짧으면 3개도
+  통과할 수 있음). 템플릿 자체에 "필요 없으면 삭제" 안내가 이미 있으므로 **범위 밖**으로 두고
+  마크업을 임의로 2개로 줄이지 않았다.
