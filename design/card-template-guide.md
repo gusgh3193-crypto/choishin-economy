@@ -470,11 +470,11 @@ aspect-ratio가 1080px 폭 고정에서도 4:5=1350px 높이로 정확히 변환
 
 | 셀렉터 | 실제 값(`card-template.html`) | 매핑 주장 | `color-palette.md` 1번 hex | 일치 |
 |---|---|---|---|---|
-| `.card` | `background-color: var(--color-bg)` (70행) | `--color-bg` | `#FFFFFF` | 일치 |
-| `.card`, `.card-summary`, `.card-points`, `.card-footer`, `.card-slot-label` | `color: var(--color-text)` (71, 56, 108, 117, 144행) | `--color-text` | `#333333` | 일치 |
-| `.card-title` | `color: var(--color-heading)` (101행) | `--color-heading` | `#1A1A1A` | 일치 |
-| `.card-eyebrow` | `color: var(--color-link)` (90행) | `--color-link` | `#0B5FA5` | 일치 |
-| `.preview-note`, `.card-disclaimer` | `background-color/color: var(--color-warning-bg/-text)` (30~31, 129~130행) | `--color-warning-bg`/`--color-warning-text` | `#FFF3E0`/`#6B3E00` | 일치 |
+| `.card` | `background-color: var(--color-bg)` (71행) | `--color-bg` | `#FFFFFF` | 일치 |
+| `.card`, `.card-summary`, `.card-points`, `.card-footer`, `.card-slot-label` | `color: var(--color-text)` (72, 56, 109, 118, 145행) | `--color-text` | `#333333` | 일치 |
+| `.card-title` | `color: var(--color-heading)` (102행) | `--color-heading` | `#1A1A1A` | 일치 |
+| `.card-eyebrow` | `color: var(--color-link)` (91행) | `--color-link` | `#0B5FA5` | 일치 |
+| `.preview-note`, `.card-disclaimer` | `background-color/color: var(--color-warning-bg/-text)` (31~32, 130~131행) | `--color-warning-bg`/`--color-warning-text` | `#FFF3E0`/`#6B3E00` | 일치 |
 
 새로운 hex 리터럴은 CSS 변수 선언부(`site.css`) 바깥에서 쓰인 적이 없고, `card-template.html`
 은 전부 `var(--color-*)` 참조만 쓴다. `site.css`의 `:root` 값은 2026-10-27 점검에서 이미
