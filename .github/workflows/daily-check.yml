@@ -1,0 +1,15 @@
+name: Daily Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  daily-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run daily_check.sh
+        run: bash scripts/daily_check.sh
