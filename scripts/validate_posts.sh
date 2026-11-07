@@ -11,6 +11,11 @@
 #      초과하지 않는가(한글 포함 문자 수 기준, 2026-10-23 추가)
 #   6) frontmatter에 category 필드가 있다면 값이 비어있거나 공백뿐이지 않은가
 #      (category 필드 자체가 없는 것은 선택적 필드이므로 허용, 2026-10-28 추가)
+#   7) posts/ 디렉터리 안에 .md가 아닌 파일(예: .txt, 확장자 없는 파일)이
+#      있는가(2026-11-06 test_filename_format.sh가 발견한 공백: 77~78행의
+#      post_files=("${POSTS_DIR}"/*.md) 글롭이 .md가 아닌 파일을 조용히
+#      걸러내 1)~6) 검사에 전혀 도달하지 못했다. 2026-11-07 마스터 지시로
+#      추가)
 #
 # 사용법:
 #   bash scripts/validate_posts.sh
@@ -74,13 +79,39 @@ if [ ! -d "${POSTS_DIR}" ]; then
   exit 1
 fi
 
+# 7) posts/ 디렉터리 안에 .md가 아닌 파일 검사
+#    아래에서 만드는 post_files=("${POSTS_DIR}"/*.md) 글롭은 .md로 끝나지
+#    않는 파일을 post_files 배열에 담기도 전에 조용히 걸러낸다. 그 결과
+#    posts/에 .txt 파일이나 확장자 없는 파일이 실수로 들어가도 아래 1)~6)
+#    검사 루프에는 전혀 도달하지 못해 아무 FAIL도 나지 않고 무시되었다
+#    (2026-11-06 scripts/test_filename_format.sh의 검사 4에서 재현·기록된
+#    공백, 2026-11-07 마스터 지시로 이 검사를 추가해 메운다). post_files
+#    배열이 비어있어 바로 아래에서 조기 종료(exit 0)하는 경우(.md 파일이
+#    하나도 없는 경우)에도 이 검사가 먼저 실행되도록, post_files 글롭보다도
+#    앞에 둔다. 여기서는 POSTS_DIR의 모든 항목을 훑어, 디렉터리를 제외한
+#    파일 중 파일명이 .md로 끝나지 않는 것이 있으면 FAIL 처리한다.
+shopt -s nullglob
+all_entries_in_posts_dir=("${POSTS_DIR}"/*)
+shopt -u nullglob
+
+for entry in "${all_entries_in_posts_dir[@]}"; do
+  [ -d "${entry}" ] && continue
+  entry_filename="$(basename "${entry}")"
+  if [[ ! "${entry_filename}" =~ \.md$ ]]; then
+    overall_status=1
+    echo "[FAIL] .md가 아닌 파일 발견: ${entry_filename} (posts/ 디렉터리에는 .md 파일만 있어야 합니다)"
+  fi
+done
+
 shopt -s nullglob
 post_files=("${POSTS_DIR}"/*.md)
 shopt -u nullglob
 
 if [ ${#post_files[@]} -eq 0 ]; then
-  echo "경고: ${POSTS_DIR} 안에 검사할 .md 파일이 없습니다."
-  exit 0
+  if [ ${overall_status} -eq 0 ]; then
+    echo "경고: ${POSTS_DIR} 안에 검사할 .md 파일이 없습니다."
+  fi
+  exit ${overall_status}
 fi
 
 # 0) 슬러그 중복 검사

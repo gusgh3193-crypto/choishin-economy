@@ -54,19 +54,22 @@
 #      글을 임시 posts/ 안에 만들고 validate_posts.sh(사본)를 실행했을 때,
 #      exit code가 1(FAIL)이고 "파일명이 YYYY-MM-DD-슬러그.md 형식이
 #      아닙니다" 메시지가 해당 파일명과 함께 출력되는지 확인한다.
-#   4) [확장자 불일치 케이스, 2026-11-06 확인된 별도 공백] "2026-11-06-test-slug.txt"
-#      (확장자가 .md가 아님) 글 하나만 임시 posts/ 안에 만들고
-#      validate_posts.sh(사본)를 실행했을 때 실제로 어떻게 처리되는지 확인한다.
-#      직접 실행해 재현한 결과, validate_posts.sh 77~78행의
-#      post_files=("${POSTS_DIR}"/*.md) 글롭(glob) 자체가 ".md로 끝나지 않는
-#      파일"을 배열에 담기도 전에 걸러내므로, 이런 파일은 1번 검사(FILENAME_REGEX)
-#      루프에 도달하지 못하고 "검사할 .md 파일이 없습니다" 경고만 내며 exit
-#      code 0(PASS)으로 끝난다. 즉 "확장자가 .md가 아니면 FAIL 메시지가
-#      뜬다"는 기대는 현재 코드에서는 성립하지 않는다(글롭 단계에서 조용히
-#      무시됨). 이 테스트는 FAIL을 기대하지 않고, 이 "조용히 무시되는" 실제
-#      동작 자체를 고정해 회귀를 감지하는 용도로만 둔다(이 공백 자체를
-#      메우는 것은 오늘 작업 범위가 아니므로 validate_posts.sh는 수정하지
-#      않고, 마스터에게 별도로 보고한다).
+#   4) [확장자 불일치 케이스] "2026-11-06-test-slug.txt"(확장자가 .md가 아님)
+#      글 하나만 임시 posts/ 안에 만들고 validate_posts.sh(사본)를 실행했을
+#      때 실제로 어떻게 처리되는지 확인한다.
+#      주의(2026-11-07 갱신): 2026-11-06에 직접 실행해 재현했을 때는,
+#      validate_posts.sh 77~78행의 post_files=("${POSTS_DIR}"/*.md) 글롭(glob)
+#      자체가 ".md로 끝나지 않는 파일"을 배열에 담기도 전에 걸러내버려 이런
+#      파일이 1번 검사(FILENAME_REGEX) 루프에 전혀 도달하지 못하고
+#      "검사할 .md 파일이 없습니다" 경고만 내며 exit code 0(PASS)으로
+#      끝나는 공백이 있었다("추후 개발팀 작업 후보"로 기록). 2026-11-07
+#      마스터 지시로 validate_posts.sh에 "7) posts/ 디렉터리 안에 .md가
+#      아닌 파일 검사"가 추가되어 이 공백이 메워졌으므로, 이 검사의 기대값도
+#      새 동작(exit code 1, ".md가 아닌 파일 발견: <파일명>" FAIL 메시지
+#      출력)으로 갱신한다. 1번 검사(FILENAME_REGEX) 자체가 이 파일을
+#      "통과"시키는 것이 아니라, 별도로 추가된 7번 검사가 이를 잡는다는
+#      점은 변하지 않는다. 7번 검사 자체를 더 폭넓게(혼합/단독 케이스 등)
+#      전용으로 검증하는 것은 scripts/test_non_md_extension.sh가 맡는다.
 #
 # 사용법:
 #   bash scripts/test_filename_format.sh
@@ -215,10 +218,11 @@ else
 fi
 
 echo ""
-echo "=== 검사 4(정보성, FAIL 집계에 포함하지 않음): 확장자가 .md가 아닌 파일명의 실제 처리 방식 확인 ==="
-echo "    (2026-11-06 확인된 별도 공백: posts/*.md 글롭이 먼저 걸러내 1번 검사 루프에 도달하지 못하고,"
-echo "     '검사할 .md 파일이 없습니다' 경고만 내며 exit 0으로 끝난다. 이 동작을 고정해서 기록만 해둔다.)"
+echo "=== 검사 4: 확장자가 .md가 아닌 파일명 -> FAIL 이어야 함 (2026-11-07 갱신) ==="
+echo "    (2026-11-06에는 posts/*.md 글롭이 먼저 걸러내 1번 검사 루프에 도달하지 못하고 조용히"
+echo "     무시되는 공백이 있었으나, 2026-11-07 validate_posts.sh의 7번 검사 추가로 메워졌다.)"
 EXT_MISMATCH_FILE="2026-11-06-test-slug.txt"
+NON_MD_FAIL_MESSAGE=".md가 아닌 파일 발견"
 ext_mismatch_result="$(run_validate_with_post "${EXT_MISMATCH_FILE}")"
 ext_mismatch_status="$(echo "${ext_mismatch_result}" | head -n 1)"
 ext_mismatch_output="$(echo "${ext_mismatch_result}" | tail -n +2)"
@@ -226,14 +230,19 @@ ext_mismatch_output="$(echo "${ext_mismatch_result}" | tail -n +2)"
 echo "${ext_mismatch_output}"
 echo "(실행 exit code: ${ext_mismatch_status})"
 
-if [ "${ext_mismatch_status}" -eq 0 ] && echo "${ext_mismatch_output}" | grep -qF "검사할 .md 파일이 없습니다"; then
-  echo "[INFO] 예상대로 글롭 단계에서 조용히 무시되어 exit code 0, \"검사할 .md 파일이 없습니다\" 경고만 출력되었습니다."
-  echo "[INFO] 참고: 이는 1번 검사(FILENAME_REGEX) 자체가 '통과'한 것이 아니라, 이 파일이 검사 대상에서"
-  echo "       애초에 제외된 것입니다. 확장자 불일치를 FAIL로 잡는 전용 검사는 현재 없습니다(별도 보고 대상)."
+if [ "${ext_mismatch_status}" -ne 1 ]; then
+  echo "[FAIL] 확장자 불일치 파일(${EXT_MISMATCH_FILE})인데 exit code가 1이 아니었습니다 (실제: ${ext_mismatch_status})."
+  failures+=("확장자 불일치 케이스(${EXT_MISMATCH_FILE}) exit code != 1")
 else
-  echo "[FAIL] 확장자 불일치 파일(${EXT_MISMATCH_FILE})의 실제 처리 방식이 기존에 확인한 동작과 달라졌습니다."
-  echo "       (exit code: ${ext_mismatch_status}, 출력에 '검사할 .md 파일이 없습니다' 포함 여부도 확인하세요.)"
-  failures+=("확장자 불일치 케이스(${EXT_MISMATCH_FILE})의 실제 동작이 기록된 것과 다름(validate_posts.sh 변경 여부 확인 필요)")
+  echo "[PASS] 확장자 불일치 파일(${EXT_MISMATCH_FILE})은 exit code가 1(FAIL)입니다."
+fi
+
+if echo "${ext_mismatch_output}" | grep -qF "${NON_MD_FAIL_MESSAGE}" && echo "${ext_mismatch_output}" | grep -qF "${EXT_MISMATCH_FILE}"; then
+  echo "[PASS] 출력에 \"${NON_MD_FAIL_MESSAGE}\" 메시지와 해당 파일명(${EXT_MISMATCH_FILE})이 함께 포함되어 있습니다."
+  echo "[INFO] 참고: 이는 1번 검사(FILENAME_REGEX)가 아니라 2026-11-07에 추가된 7번 검사(비-.md 파일 검사)가 잡은 것입니다."
+else
+  echo "[FAIL] 출력에 \"${NON_MD_FAIL_MESSAGE}\" 메시지 또는 파일명(${EXT_MISMATCH_FILE})이 없습니다."
+  failures+=("확장자 불일치 케이스(${EXT_MISMATCH_FILE}) 메시지 누락")
 fi
 
 if [ ${#failures[@]} -eq 0 ]; then
