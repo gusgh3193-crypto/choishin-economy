@@ -235,22 +235,37 @@
 #      없는 글은 dateModified가 datePublished와 동일한 값으로 채워지는지까지
 #      함께 검증한다(posts/의 실제 파일은 건드리지 않고 임시 디렉터리에서
 #      검증한다).
+#  31) keywords 콤마-문자열 분기 회귀 테스트 - scripts/test_keywords_comma_separated.sh를
+#      실행해, generate_jsonld.sh의 keywords 분기 중 keywords가 YAML 배열이
+#      아니라 콤마로 구분된 문자열로 주어지는 경우를 처리하는 분기(164~183행)가
+#      실제로 동작하는지 검증한다. 30)에서 메운 dateModified/updated 분기와
+#      함께 2026-11-08 test_missing_frontmatter.sh 조사 과정에서 전용 회귀
+#      테스트가 약한 후보로 남겨진 4가지(author Person/Organization 분기,
+#      dateModified/updated 필드 분기, keywords 콤마-문자열 분기,
+#      HOME_LASTMOD 계산 로직) 중 2026-10-10/11-11에 걸쳐 "참고용 공백"으로
+#      남아 있던 마지막 후보를 메우기 위해 2026-11-12 마스터 지시로 추가했다.
+#      대괄호/바깥 따옴표 없는 콤마 구분 문자열(keywords: 금리, 물가, 환율)과
+#      전체를 쌍따옴표로 감싼 콤마 구분 문자열(keywords: "금리, 물가, 환율")
+#      모두 각 항목이 올바르게 분리되어 배열로 채워지는지, 바깥 따옴표가
+#      항목 안에 섞여 들어가지 않는지까지 함께 검증한다(posts/의 실제 파일은
+#      건드리지 않고 임시 디렉터리에서 검증한다).
 #
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
 # 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째,
 # 14번째, 15번째, 16번째, 17번째, 18번째, 20번째, 21번째, 22번째, 23번째,
-# 24번째, 25번째, 26번째, 27번째, 28번째, 29번째, 30번째 검증 단계는 daily_check.sh
-# 자체에 추가된 로직이며, 기존 스물한 스크립트(validate_posts.sh, generate_sitemap.sh,
-# generate_jsonld.sh, test_color_palette.sh, test_split_keywords.sh,
-# test_sitemap_dash_title.sh, test_duplicate_slug.sh, test_required_date_field.sh,
-# test_img_alt_required.sh, test_meta_length.sh, test_category_article_section.sh,
-# test_category_empty_field.sh, test_date_filename_mismatch.sh,
-# test_title_meta_empty_quoted.sh, test_required_title_meta_keywords_field.sh,
-# test_keywords_empty_array.sh, test_keywords_unquoted_items.sh,
-# test_filename_format.sh, test_non_md_extension.sh, test_missing_frontmatter.sh,
-# test_home_lastmod.sh, test_author_person_organization.sh,
-# test_date_modified_updated.sh)의 내용을 건드리지 않는다.
+# 24번째, 25번째, 26번째, 27번째, 28번째, 29번째, 30번째, 31번째 검증 단계는
+# daily_check.sh 자체에 추가된 로직이며, 기존 스물두 스크립트(validate_posts.sh,
+# generate_sitemap.sh, generate_jsonld.sh, test_color_palette.sh,
+# test_split_keywords.sh, test_sitemap_dash_title.sh, test_duplicate_slug.sh,
+# test_required_date_field.sh, test_img_alt_required.sh, test_meta_length.sh,
+# test_category_article_section.sh, test_category_empty_field.sh,
+# test_date_filename_mismatch.sh, test_title_meta_empty_quoted.sh,
+# test_required_title_meta_keywords_field.sh, test_keywords_empty_array.sh,
+# test_keywords_unquoted_items.sh, test_filename_format.sh,
+# test_non_md_extension.sh, test_missing_frontmatter.sh, test_home_lastmod.sh,
+# test_author_person_organization.sh, test_date_modified_updated.sh,
+# test_keywords_comma_separated.sh)의 내용을 건드리지 않는다.
 #
 # 한 단계가 실패(exit 1)해도 나머지 단계는 계속 진행한다. 다만 하나라도 실패한
 # 단계가 있으면 이 스크립트도 최종적으로 exit 1로 끝난다.
@@ -287,6 +302,7 @@ MISSING_FRONTMATTER_TEST_SCRIPT="${SCRIPT_DIR}/test_missing_frontmatter.sh"
 HOME_LASTMOD_TEST_SCRIPT="${SCRIPT_DIR}/test_home_lastmod.sh"
 AUTHOR_PERSON_ORGANIZATION_TEST_SCRIPT="${SCRIPT_DIR}/test_author_person_organization.sh"
 DATE_MODIFIED_UPDATED_TEST_SCRIPT="${SCRIPT_DIR}/test_date_modified_updated.sh"
+KEYWORDS_COMMA_SEPARATED_TEST_SCRIPT="${SCRIPT_DIR}/test_keywords_comma_separated.sh"
 JSONLD_DIR="${REPO_ROOT}/seo/jsonld"
 SITEMAP_FILE="${REPO_ROOT}/seo/sitemap.xml"
 POSTS_DIR="${REPO_ROOT}/posts"
@@ -294,28 +310,28 @@ POSTS_DIR="${REPO_ROOT}/posts"
 overall_status=0
 
 echo "=========================================="
-echo "[1/30] 글 규칙 검증을 실행합니다: validate_posts.sh"
+echo "[1/31] 글 규칙 검증을 실행합니다: validate_posts.sh"
 echo "=========================================="
 bash "${VALIDATE_SCRIPT}"
 validate_status=$?
 
 echo ""
 echo "=========================================="
-echo "[2/30] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
+echo "[2/31] sitemap.xml / robots.txt 생성을 실행합니다: generate_sitemap.sh"
 echo "=========================================="
 bash "${SITEMAP_SCRIPT}"
 sitemap_status=$?
 
 echo ""
 echo "=========================================="
-echo "[3/30] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
+echo "[3/31] JSON-LD 생성을 실행합니다: generate_jsonld.sh"
 echo "=========================================="
 bash "${JSONLD_SCRIPT}"
 jsonld_status=$?
 
 echo ""
 echo "=========================================="
-echo "[4/30] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
+echo "[4/31] JSON-LD 유효성 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_validate_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -347,7 +363,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[5/30] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
+echo "[5/31] sitemap.xml 유효성 검증을 실행합니다: seo/sitemap.xml"
 echo "=========================================="
 sitemap_validate_status=0
 if [ ! -f "${SITEMAP_FILE}" ]; then
@@ -369,7 +385,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[6/30] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
+echo "[6/31] JSON-LD 필수 필드 검증을 실행합니다: seo/jsonld/*.json"
 echo "=========================================="
 jsonld_required_fields_status=0
 if [ ! -d "${JSONLD_DIR}" ]; then
@@ -468,7 +484,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[7/30] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
+echo "[7/31] 도메인 일관성 검증을 실행합니다: seo/sitemap.xml ↔ seo/jsonld/*.json ↔ seo/robots.txt"
 echo "=========================================="
 domain_consistency_status=0
 ROBOTS_FILE="${REPO_ROOT}/seo/robots.txt"
@@ -589,7 +605,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[8/30] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
+echo "[8/31] posts ↔ sitemap 글 목록 일치 검증을 실행합니다: posts/ ↔ seo/sitemap.xml"
 echo "=========================================="
 posts_sitemap_status=0
 if [ ! -d "${POSTS_DIR}" ]; then
@@ -679,7 +695,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[9/30] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
+echo "[9/31] robots.txt 기본 구조 검증을 실행합니다: seo/robots.txt"
 echo "=========================================="
 robots_validate_status=0
 if [ ! -f "${ROBOTS_FILE}" ]; then
@@ -722,152 +738,159 @@ fi
 
 echo ""
 echo "=========================================="
-echo "[10/30] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
+echo "[10/31] 색상 팔레트 일치 회귀 테스트를 실행합니다: test_color_palette.sh"
 echo "=========================================="
 bash "${COLOR_PALETTE_TEST_SCRIPT}"
 color_palette_status=$?
 
 echo ""
 echo "=========================================="
-echo "[11/30] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
+echo "[11/31] split_keywords_items() 함수 동일성 회귀 테스트를 실행합니다: test_split_keywords.sh"
 echo "=========================================="
 bash "${SPLIT_KEYWORDS_TEST_SCRIPT}"
 split_keywords_status=$?
 
 echo ""
 echo "=========================================="
-echo "[12/30] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
+echo "[12/31] sitemap '--' 제목 주석 생략 회귀 테스트를 실행합니다: test_sitemap_dash_title.sh"
 echo "=========================================="
 bash "${SITEMAP_DASH_TITLE_TEST_SCRIPT}"
 sitemap_dash_title_status=$?
 
 echo ""
 echo "=========================================="
-echo "[13/30] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
+echo "[13/31] 슬러그 중복 검출 회귀 테스트를 실행합니다: test_duplicate_slug.sh"
 echo "=========================================="
 bash "${DUPLICATE_SLUG_TEST_SCRIPT}"
 duplicate_slug_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[14/30] date 필드 필수 검출 회귀 테스트를 실행합니다: test_required_date_field.sh"
+echo "[14/31] date 필드 필수 검출 회귀 테스트를 실행합니다: test_required_date_field.sh"
 echo "=========================================="
 bash "${REQUIRED_DATE_FIELD_TEST_SCRIPT}"
 required_date_field_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[15/30] img alt 속성 필수 검출 회귀 테스트를 실행합니다: test_img_alt_required.sh"
+echo "[15/31] img alt 속성 필수 검출 회귀 테스트를 실행합니다: test_img_alt_required.sh"
 echo "=========================================="
 bash "${IMG_ALT_REQUIRED_TEST_SCRIPT}"
 img_alt_required_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[16/30] title/meta_description 길이 검사 회귀 테스트를 실행합니다: test_meta_length.sh"
+echo "[16/31] title/meta_description 길이 검사 회귀 테스트를 실행합니다: test_meta_length.sh"
 echo "=========================================="
 bash "${META_LENGTH_TEST_SCRIPT}"
 meta_length_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[17/30] category → articleSection 매핑 회귀 테스트를 실행합니다: test_category_article_section.sh"
+echo "[17/31] category → articleSection 매핑 회귀 테스트를 실행합니다: test_category_article_section.sh"
 echo "=========================================="
 bash "${CATEGORY_ARTICLE_SECTION_TEST_SCRIPT}"
 category_article_section_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[18/30] category 빈 값/공백 검출 회귀 테스트를 실행합니다: test_category_empty_field.sh"
+echo "[18/31] category 빈 값/공백 검출 회귀 테스트를 실행합니다: test_category_empty_field.sh"
 echo "=========================================="
 bash "${CATEGORY_EMPTY_FIELD_TEST_SCRIPT}"
 category_empty_field_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[19/30] 면책 문구 필수 검출 회귀 테스트를 실행합니다: test_disclaimer_required.sh"
+echo "[19/31] 면책 문구 필수 검출 회귀 테스트를 실행합니다: test_disclaimer_required.sh"
 echo "=========================================="
 bash "${DISCLAIMER_REQUIRED_TEST_SCRIPT}"
 disclaimer_required_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[20/30] date 필드/파일명 날짜 불일치 검출 회귀 테스트를 실행합니다: test_date_filename_mismatch.sh"
+echo "[20/31] date 필드/파일명 날짜 불일치 검출 회귀 테스트를 실행합니다: test_date_filename_mismatch.sh"
 echo "=========================================="
 bash "${DATE_FILENAME_MISMATCH_TEST_SCRIPT}"
 date_filename_mismatch_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[21/30] title/meta_description 빈 값(따옴표 안 공백) 검출 회귀 테스트를 실행합니다: test_title_meta_empty_quoted.sh"
+echo "[21/31] title/meta_description 빈 값(따옴표 안 공백) 검출 회귀 테스트를 실행합니다: test_title_meta_empty_quoted.sh"
 echo "=========================================="
 bash "${TITLE_META_EMPTY_QUOTED_TEST_SCRIPT}"
 title_meta_empty_quoted_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[22/30] title/meta_description/keywords 필드 누락 검출 회귀 테스트를 실행합니다: test_required_title_meta_keywords_field.sh"
+echo "[22/31] title/meta_description/keywords 필드 누락 검출 회귀 테스트를 실행합니다: test_required_title_meta_keywords_field.sh"
 echo "=========================================="
 bash "${REQUIRED_TITLE_META_KEYWORDS_FIELD_TEST_SCRIPT}"
 required_title_meta_keywords_field_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[23/30] keywords 빈 배열 검출 회귀 테스트를 실행합니다: test_keywords_empty_array.sh"
+echo "[23/31] keywords 빈 배열 검출 회귀 테스트를 실행합니다: test_keywords_empty_array.sh"
 echo "=========================================="
 bash "${KEYWORDS_EMPTY_ARRAY_TEST_SCRIPT}"
 keywords_empty_array_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[24/30] keywords 배열 항목 따옴표 검출 회귀 테스트를 실행합니다: test_keywords_unquoted_items.sh"
+echo "[24/31] keywords 배열 항목 따옴표 검출 회귀 테스트를 실행합니다: test_keywords_unquoted_items.sh"
 echo "=========================================="
 bash "${KEYWORDS_UNQUOTED_ITEMS_TEST_SCRIPT}"
 keywords_unquoted_items_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[25/30] 파일명 형식 검출 회귀 테스트를 실행합니다: test_filename_format.sh"
+echo "[25/31] 파일명 형식 검출 회귀 테스트를 실행합니다: test_filename_format.sh"
 echo "=========================================="
 bash "${FILENAME_FORMAT_TEST_SCRIPT}"
 filename_format_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[26/30] posts/ 안 비-.md 파일 검출 회귀 테스트를 실행합니다: test_non_md_extension.sh"
+echo "[26/31] posts/ 안 비-.md 파일 검출 회귀 테스트를 실행합니다: test_non_md_extension.sh"
 echo "=========================================="
 bash "${NON_MD_EXTENSION_TEST_SCRIPT}"
 non_md_extension_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[27/30] frontmatter 자체가 없는 글 검출 회귀 테스트를 실행합니다: test_missing_frontmatter.sh"
+echo "[27/31] frontmatter 자체가 없는 글 검출 회귀 테스트를 실행합니다: test_missing_frontmatter.sh"
 echo "=========================================="
 bash "${MISSING_FRONTMATTER_TEST_SCRIPT}"
 missing_frontmatter_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[28/30] 홈 <lastmod>(HOME_LASTMOD) 계산 로직 회귀 테스트를 실행합니다: test_home_lastmod.sh"
+echo "[28/31] 홈 <lastmod>(HOME_LASTMOD) 계산 로직 회귀 테스트를 실행합니다: test_home_lastmod.sh"
 echo "=========================================="
 bash "${HOME_LASTMOD_TEST_SCRIPT}"
 home_lastmod_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[29/30] author Person/Organization 분기 회귀 테스트를 실행합니다: test_author_person_organization.sh"
+echo "[29/31] author Person/Organization 분기 회귀 테스트를 실행합니다: test_author_person_organization.sh"
 echo "=========================================="
 bash "${AUTHOR_PERSON_ORGANIZATION_TEST_SCRIPT}"
 author_person_organization_test_status=$?
 
 echo ""
 echo "=========================================="
-echo "[30/30] dateModified/updated 필드 분기 회귀 테스트를 실행합니다: test_date_modified_updated.sh"
+echo "[30/31] dateModified/updated 필드 분기 회귀 테스트를 실행합니다: test_date_modified_updated.sh"
 echo "=========================================="
 bash "${DATE_MODIFIED_UPDATED_TEST_SCRIPT}"
 date_modified_updated_test_status=$?
 
-if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ] || [ ${required_date_field_test_status} -ne 0 ] || [ ${img_alt_required_test_status} -ne 0 ] || [ ${meta_length_test_status} -ne 0 ] || [ ${category_article_section_test_status} -ne 0 ] || [ ${category_empty_field_test_status} -ne 0 ] || [ ${disclaimer_required_test_status} -ne 0 ] || [ ${date_filename_mismatch_test_status} -ne 0 ] || [ ${title_meta_empty_quoted_test_status} -ne 0 ] || [ ${required_title_meta_keywords_field_test_status} -ne 0 ] || [ ${keywords_empty_array_test_status} -ne 0 ] || [ ${keywords_unquoted_items_test_status} -ne 0 ] || [ ${filename_format_test_status} -ne 0 ] || [ ${non_md_extension_test_status} -ne 0 ] || [ ${missing_frontmatter_test_status} -ne 0 ] || [ ${home_lastmod_test_status} -ne 0 ] || [ ${author_person_organization_test_status} -ne 0 ] || [ ${date_modified_updated_test_status} -ne 0 ]; then
+echo ""
+echo "=========================================="
+echo "[31/31] keywords 콤마-문자열 분기 회귀 테스트를 실행합니다: test_keywords_comma_separated.sh"
+echo "=========================================="
+bash "${KEYWORDS_COMMA_SEPARATED_TEST_SCRIPT}"
+keywords_comma_separated_test_status=$?
+
+if [ ${validate_status} -ne 0 ] || [ ${sitemap_status} -ne 0 ] || [ ${jsonld_status} -ne 0 ] || [ ${jsonld_validate_status} -ne 0 ] || [ ${sitemap_validate_status} -ne 0 ] || [ ${jsonld_required_fields_status} -ne 0 ] || [ ${domain_consistency_status} -ne 0 ] || [ ${posts_sitemap_status} -ne 0 ] || [ ${robots_validate_status} -ne 0 ] || [ ${color_palette_status} -ne 0 ] || [ ${split_keywords_status} -ne 0 ] || [ ${sitemap_dash_title_status} -ne 0 ] || [ ${duplicate_slug_test_status} -ne 0 ] || [ ${required_date_field_test_status} -ne 0 ] || [ ${img_alt_required_test_status} -ne 0 ] || [ ${meta_length_test_status} -ne 0 ] || [ ${category_article_section_test_status} -ne 0 ] || [ ${category_empty_field_test_status} -ne 0 ] || [ ${disclaimer_required_test_status} -ne 0 ] || [ ${date_filename_mismatch_test_status} -ne 0 ] || [ ${title_meta_empty_quoted_test_status} -ne 0 ] || [ ${required_title_meta_keywords_field_test_status} -ne 0 ] || [ ${keywords_empty_array_test_status} -ne 0 ] || [ ${keywords_unquoted_items_test_status} -ne 0 ] || [ ${filename_format_test_status} -ne 0 ] || [ ${non_md_extension_test_status} -ne 0 ] || [ ${missing_frontmatter_test_status} -ne 0 ] || [ ${home_lastmod_test_status} -ne 0 ] || [ ${author_person_organization_test_status} -ne 0 ] || [ ${date_modified_updated_test_status} -ne 0 ] || [ ${keywords_comma_separated_test_status} -ne 0 ]; then
   overall_status=1
 fi
 
@@ -913,6 +936,7 @@ echo "27) frontmatter 자체가 없는 글 검출 회귀 테스트 (test_missing
 echo "28) 홈 <lastmod>(HOME_LASTMOD) 계산 로직 회귀 테스트 (test_home_lastmod.sh) : $(status_label ${home_lastmod_test_status})"
 echo "29) author Person/Organization 분기 회귀 테스트 (test_author_person_organization.sh) : $(status_label ${author_person_organization_test_status})"
 echo "30) dateModified/updated 필드 분기 회귀 테스트 (test_date_modified_updated.sh) : $(status_label ${date_modified_updated_test_status})"
+echo "31) keywords 콤마-문자열 분기 회귀 테스트 (test_keywords_comma_separated.sh) : $(status_label ${keywords_comma_separated_test_status})"
 echo "------------------------------------------"
 if [ ${overall_status} -eq 0 ]; then
   echo "전체 결과: 모든 점검을 통과했습니다."
