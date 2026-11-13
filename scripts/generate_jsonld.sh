@@ -52,6 +52,37 @@ if [ ${#post_files[@]} -eq 0 ]; then
   echo "경고: ${POSTS_DIR} 안에 .md 파일이 없습니다. 생성할 파일이 없습니다."
 fi
 
+# 고아(orphan) JSON-LD 파일 정리.
+# 이 스크립트는 지금까지 현재 posts/에 있는 글에 대해서만 파일을
+# "생성/덮어쓰기"했고, posts/에서 글이 삭제되거나 슬러그가 바뀌어도
+# seo/jsonld/ 안의 예전 .json 파일을 지우지 않았다. 그 결과 글을 지운
+# 뒤에도 해당 글의 JSON-LD 파일이 디렉터리에 영구히 남아, 더 이상 존재
+# 하지 않는 글의 구조화 데이터가 계속 쌓이는 문제가 있었다(2026-11-13
+# 임시 글 2건을 추가 후 삭제하는 다중 글 생명주기 테스트에서 재현 확인:
+# posts/에는 1건만 남았는데 seo/jsonld/에는 삭제된 글의 .json 2건이
+# 그대로 남아있었다). 이번 실행에서 생성될 슬러그 집합과 비교해
+# 현재 posts/에 대응하는 글이 없는 .json 파일은 삭제한다.
+declare -A current_slugs
+for filepath in "${post_files[@]}"; do
+  filename="$(basename "${filepath}")"
+  if [[ "${filename}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})-(.+)\.md$ ]]; then
+    current_slugs["${BASH_REMATCH[2]}"]=1
+  fi
+done
+
+shopt -s nullglob
+existing_jsonld_files=("${JSONLD_DIR}"/*.json)
+shopt -u nullglob
+
+for existing_file in "${existing_jsonld_files[@]}"; do
+  existing_basename="$(basename "${existing_file}")"
+  existing_slug="${existing_basename%.json}"
+  if [ -z "${current_slugs[${existing_slug}]+x}" ]; then
+    rm -f "${existing_file}"
+    echo "삭제됨(고아 JSON-LD, 대응하는 글이 posts/에 없음): ${existing_file}"
+  fi
+done
+
 # JSON 문자열 안에 안전하게 넣을 수 있도록 이스케이프한다.
 json_escape() {
   local s="$1"
