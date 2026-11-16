@@ -98,6 +98,19 @@
 #      실제 파일은 건드리지 않고 임시 디렉터리에서 검증한다, 2026-10-28
 #      커밋 4628ad2로 validate_posts.sh에 추가된 검사의 회귀 테스트 공백을
 #      메우기 위해 2026-10-29 마스터 지시로 추가).
+#  19) 면책 문구 필수 검출 회귀 테스트 - scripts/test_disclaimer_required.sh를
+#      실행해, validate_posts.sh의 "4) 면책 문구 검사"(본문에 이탤릭(*...*)
+#      처리된 줄 중 면책성 키워드(책임/투자/권장/대출 등)를 포함한 줄이
+#      하나라도 있어야 PASS, 없으면 FAIL 처리하는 로직)가 실제로 동작하는지
+#      검증한다. date 필드 필수, category 빈 값 등 다른 검사들과 달리 이
+#      검사에는 그동안 전용 회귀 테스트가 없던 공백이었다(2026-10-30 조사
+#      확인). 면책 키워드를 포함한 이탤릭 줄이 있는 경우(PASS), 본문에
+#      이탤릭 처리가 전혀 없는 경우(FAIL), 이탤릭 처리는 있지만 면책
+#      키워드가 전혀 없는 경우(FAIL), 그리고 굵게(**...**) 처리된 줄만
+#      있고 실제 이탤릭 처리는 없는 경우(FAIL, 굵게를 이탤릭으로 오탐하지
+#      않는지 확인하는 회귀 방지 케이스)까지 함께 검증한다(posts/의 실제
+#      파일은 건드리지 않고 임시 디렉터리에서 검증한다, 2026-10-30 커밋
+#      e91e2ab로 추가).
 #  20) date 필드/파일명 날짜 불일치 검출 회귀 테스트 - scripts/test_date_filename_mismatch.sh를
 #      실행해, validate_posts.sh의 3-2 검사(frontmatter의 date 필드가 파일명의
 #      날짜와 일치하는지 검사)가 실제로 동작하는지 검증한다. date가 파일명과
@@ -253,14 +266,15 @@
 # 이 스크립트는 기존 세 스크립트(validate_posts.sh, generate_sitemap.sh,
 # generate_jsonld.sh)의 내용을 절대 수정하지 않고, 그대로 호출만 한다.
 # 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째,
-# 14번째, 15번째, 16번째, 17번째, 18번째, 20번째, 21번째, 22번째, 23번째,
+# 14번째, 15번째, 16번째, 17번째, 18번째, 19번째, 20번째, 21번째, 22번째, 23번째,
 # 24번째, 25번째, 26번째, 27번째, 28번째, 29번째, 30번째, 31번째 검증 단계는
 # daily_check.sh 자체에 추가된 로직이며, 기존 스물두 스크립트(validate_posts.sh,
 # generate_sitemap.sh, generate_jsonld.sh, test_color_palette.sh,
 # test_split_keywords.sh, test_sitemap_dash_title.sh, test_duplicate_slug.sh,
 # test_required_date_field.sh, test_img_alt_required.sh, test_meta_length.sh,
 # test_category_article_section.sh, test_category_empty_field.sh,
-# test_date_filename_mismatch.sh, test_title_meta_empty_quoted.sh,
+# test_disclaimer_required.sh, test_date_filename_mismatch.sh,
+# test_title_meta_empty_quoted.sh,
 # test_required_title_meta_keywords_field.sh, test_keywords_empty_array.sh,
 # test_keywords_unquoted_items.sh, test_filename_format.sh,
 # test_non_md_extension.sh, test_missing_frontmatter.sh, test_home_lastmod.sh,
