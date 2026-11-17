@@ -268,7 +268,7 @@
 # 4번째, 5번째, 6번째, 7번째, 8번째, 9번째, 10번째, 11번째, 12번째, 13번째,
 # 14번째, 15번째, 16번째, 17번째, 18번째, 19번째, 20번째, 21번째, 22번째, 23번째,
 # 24번째, 25번째, 26번째, 27번째, 28번째, 29번째, 30번째, 31번째 검증 단계는
-# daily_check.sh 자체에 추가된 로직이며, 기존 스물두 스크립트(validate_posts.sh,
+# daily_check.sh 자체에 추가된 로직이며, 기존 스물다섯 스크립트(validate_posts.sh,
 # generate_sitemap.sh, generate_jsonld.sh, test_color_palette.sh,
 # test_split_keywords.sh, test_sitemap_dash_title.sh, test_duplicate_slug.sh,
 # test_required_date_field.sh, test_img_alt_required.sh, test_meta_length.sh,

@@ -452,6 +452,25 @@ aspect-ratio가 1080px 폭 고정에서도 4:5=1350px 높이로 정확히 변환
 있고 저장소에는 커밋되지 않았다(과거 2026-10-13/14 검증과 동일한 방식) — `design/`
 폴더에는 이번 검증으로 인한 CSS/HTML 파일 변경이 없음을 `git status`/`git diff`로 확인했다.
 
+**(2026-11-17 보완) 위 문단 끝의 "스크린샷 자체는... 저장소에는 커밋되지 않았다"는
+한계가 해소됐다.** 오늘 개발팀이 동일한 방식(헤드리스 Chromium/Playwright, viewport
+1400x1600, `addStyleTag`로 `.card.ratio-1-1`/`.card.ratio-4-5`에 `width: 1080px
+!important`만 런타임 주입, 저장소 CSS/HTML 파일은 수정하지 않음)으로 1080px 내보내기
+검증을 다시 수행하면서, 이번에는 스크린샷 4장을 저장소 `design/`에 실제로 커밋 가능한
+형태로 남겼다 —
+`design/render-check-2026-11-17-card-template-1x1.png`(39,440 bytes),
+`design/render-check-2026-11-17-card-template-4x5.png`(40,958 bytes),
+`design/render-check-2026-11-17-card-reconciled-1x1.png`(35,006 bytes),
+`design/render-check-2026-11-17-card-reconciled-4x5.png`(36,551 bytes). 디자인팀이
+이 4장을 직접 Read 도구로 열어 육안으로 재확인한 결과, `design/card-template.html`과
+`design/card-template-reconciled-test.html` 두 파일 모두 텍스트 잘림·겹침·번짐이 없고
+줄바꿈이 자연스러웠으며, `.ratio-1-1`은 정사각형, `.ratio-4-5`는 세로로 더 긴 비율로
+올바르게 렌더링되어 레이아웃 왜곡이 없음을 확인했다(개발팀이 보고한 측정값 —
+`.ratio-1-1` 1078×1078px, `.ratio-4-5` 1078×1348px, clientHeight=scrollHeight로
+오버플로 없음, font-size `.card-eyebrow` 16px·`.card-title` 25.6px·`.card-summary`/
+`.card-disclaimer`/`.card-footer` 16px — 와도 일치). 즉 "재현 가능한 증거가 저장소에
+없다"는 과거의 한계는 더 이상 유효하지 않다.
+
 ---
 
 ## `card-template.html` ↔ 규칙 문서 정적 대조 점검 (2026-10-28)
