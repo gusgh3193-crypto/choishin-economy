@@ -249,6 +249,26 @@ PASS이나, 이 글의 현재 콘텐츠로는 가로 스크롤이 실제로 트�
   이는 CSS 뷰포트 축소를 통한 리플로우 시뮬레이션이자 로컬 mockup.html 미리보기 스크린샷이며,
   실제 배포된 사이트에서 브라우저 네이티브 확대(Ctrl/Cmd + "+") 기능으로 레이아웃을 직접 확대해
   본 것은 아니므로, 그 부분은 여전히 확인 못 함(배포 후 재확인 필요)이다.
+  **(2026-11-20 갱신) 수동 1회성 점검 → 자동 회귀 테스트로 전환** — 위 2026-11-18 점검은 그날
+  한 번만 수행된 수동(one-off) 점검으로, `scripts/daily_check.sh`의 자동 회귀 테스트 목록에는
+  포함되지 않아 이후 `design/mockup-*.html`이나 `design/site.css`가 바뀌어 320px에서 가로
+  스크롤·요소 넘침·형제 블록 겹침이 생겨도 자동으로 잡아낼 수 없었다. 오늘 개발팀이 새 파일
+  `scripts/test_reflow_320px.sh`와 `scripts/check_reflow_320px.js`를 추가하고
+  `scripts/daily_check.sh`의 32번째 단계로 등록해, 위 2026-11-18 실측 기준값(가로 스크롤 없음
+  즉 `scrollWidth===clientWidth`, H1 1개·H2 6개·본문 단락 7개·`.table-wrapper`·`.disclaimer`가
+  모두 `overflowsRight: false`, 형제 블록 간 `overlapPairs: []`)과 동일한 기준으로 앞으로
+  `bash scripts/daily_check.sh`를 실행할 때마다 320px 리플로우를 자동으로 재검증하도록 만들었다.
+  디자인팀이 두 파일(`scripts/test_reflow_320px.sh`, `scripts/check_reflow_320px.js`)을 Read로
+  직접 열어 검토한 결과, 검사 대상 요소(H1/H2/본문 단락[`.post-date`·`.disclaimer` 제외]/
+  `.table-wrapper`/`.disclaimer`)와 비교 기준값이 위 설명과 정확히 일치했고, 마스터가 직접
+  `bash scripts/daily_check.sh`를 실행해 32단계 전부 성공함을 확인했으며 의도적으로 깨진
+  HTML로도 [FAIL]을 정확히 잡아내는 것을 확인했다고 전달받았다(디자인팀은 Bash 도구가 없어
+  이 실행 자체를 재현하지는 못했다). 디자인 관점의 보완 제안: 현재 `p.body` 검사에서
+  `.post-date`가 제외되어 있어 날짜 표기 자체의 오버플로우는 이 테스트로 잡히지 않는다. 향후
+  `.post-date`도 별도 선택자로 추가해 오버플로우를 검사하면 더 빈틈없는 커버리지가 될 것이다.
+  또한 추후 모크업에 이미지(`img`)나 버튼/CTA 요소가 추가될 경우에도 동일한 선택자 그룹에
+  포함해 검사 대상에서 빠지지 않도록 해야 한다. 이는 보완 제안일 뿐이며, 디자인팀은
+  `scripts/*.sh`, `scripts/*.js`에 대한 Edit 권한이 없으므로 직접 수정하지 않았다.
 - **명도 대비, 링크/강조 색상 — 통과(코드 상 값 확인, 2026-10-01 재확인)**: `design/site.css` 4~12번째
   줄 `:root` 블록의 색상 변수 9개(`--color-bg: #FFFFFF`, `--color-text: #333333`,
   `--color-heading: #1A1A1A`, `--color-link: #0B5FA5`, `--color-link-visited: #6A4C93`,
