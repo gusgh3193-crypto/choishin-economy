@@ -269,6 +269,43 @@ PASS이나, 이 글의 현재 콘텐츠로는 가로 스크롤이 실제로 트�
   또한 추후 모크업에 이미지(`img`)나 버튼/CTA 요소가 추가될 경우에도 동일한 선택자 그룹에
   포함해 검사 대상에서 빠지지 않도록 해야 한다. 이는 보완 제안일 뿐이며, 디자인팀은
   `scripts/*.sh`, `scripts/*.js`에 대한 Edit 권한이 없으므로 직접 수정하지 않았다.
+  **(2026-11-21 갱신) `.post-date` 오버플로우 검사가 추가되어 2026-11-20에 지적한 빈틈이
+  해소됨** — 오늘 개발팀이 `scripts/check_reflow_320px.js`와 `scripts/test_reflow_320px.sh`를
+  수정해 위 보완 제안을 반영했고, 마스터가 직접 실행해 PASS/FAIL 양쪽 경로 모두 정확히
+  동작함을 확인했다고 전달받았다(디자인팀은 Bash 도구가 없어 이 실행 자체를 재현하지는
+  못했다). 디자인팀이 두 파일을 Read로 직접 열어 다음을 대조 확인했다.
+  - `scripts/check_reflow_320px.js` 52~64번째 줄 `selectorGroups` 배열에 `.post-date`가
+    여섯 번째 그룹(`{ label: ".post-date", elements: Array.from(document.querySelectorAll(".post-date")) }`,
+    63번째 줄)으로 추가됐고, 66~82번째 줄의 `overflowsRight: rect.right > clientWidth` 판정
+    루프는 모든 그룹(H1/H2/`p.body`/`.table-wrapper`/`.disclaimer`/`.post-date`)에 동일하게
+    적용되는 공용 로직이어서, `.post-date`만 특별 취급되거나 판정 기준이 다르게 적용되지
+    않았다. 기존 H1/H2/본문단락/`.table-wrapper`/`.disclaimer`와 완전히 동일한 방식이다.
+  - `scripts/test_reflow_320px.sh` 124~131번째 줄 `expected_counts` 딕셔너리에
+    `".post-date": 1`이 다른 선택자들과 같은 형식으로 추가됐고, 133~154번째 줄의 개수
+    일치 검사(`counts.get(selector, 0)` 비교)와 overflowsRight FAIL 처리 로직도 선택자별로
+    분기하지 않는 공용 루프라서 `.post-date` 역시 기존 항목과 동일한 검증 수준을 받는다.
+    23~27번째 줄 주석에도 "`.post-date`는 2026-11-20 디자인팀 보완 제안에 따라 2026-11-21
+    개발팀이 검사 대상에 추가했다"고 근거가 명시돼 있어 변경 이력이 추적 가능하다.
+  - 형제 블록 겹침 검사(`scripts/check_reflow_320px.js` 84~101번째 줄)는 선택자와 무관하게
+    `.page`의 모든 직계 자식을 순서대로 비교하는 로직이므로, `.post-date`는 오늘 변경과
+    무관하게 이미 이 겹침 검사의 대상이었다. 오늘 추가된 것은 `.post-date` 자체의 "뷰포트
+    오른쪽으로 넘침(overflowsRight)" 여부 판정뿐이며, 이 구분을 분명히 해 둔다.
+  - 디자인 산출물과도 대조했다. `design/site.css` 57~60번째 줄 `.post-date { color:
+    var(--color-text); font-size: 0.9rem; margin: 0 0 16px; }`로, 이미 대비가 검증된 색상
+    변수를 재사용하고 본문(`1rem`)보다 작은 `0.9rem`으로 선언돼 있다. 짧은 한 줄 텍스트
+    ("2026-09-13 작성")이지만 폰트 크기·좌우 여백 설정이 바뀌거나 날짜 형식이 길어질
+    가능성이 있는 요소이므로 회귀 테스트 대상에 포함하는 것은 타당하다.
+    `design/mockup-2026-09-13-interest-rate-impact.html` 16번째 줄
+    `<p class="post-date">2026-09-13 작성</p>`이 12번째 줄 `<div class="page">`의 직계
+    자식으로서 H1(14번째 줄)과 리드 단락(18번째 줄) 사이에 위치함을 확인했으며, 이는
+    H1/H2/`p.body`/`.table-wrapper`/`.disclaimer`와 동일한 `.page` 자식 레벨의 요소라
+    같은 선택자 그룹 방식으로 검사하는 것이 구조적으로 적절하다.
+  - 결론: 검사 대상 선정과 구현 방식 모두 디자인 관점에서 **타당함**. 추가로 빠진 선택자가
+    있는지도 함께 살펴봤으나, 이 모크업의 `.page` 직계 자식(H1·`.post-date`·본문 단락·
+    H2·`.table-wrapper`·`.disclaimer`)은 이미 전부 어느 한 선택자 그룹에 포함돼 있어
+    현재 시점에는 새로 빠진 항목을 찾지 못했다. 다만 2026-11-20에 이미 남긴 제안대로
+    향후 `img`나 버튼/CTA 요소가 모크업에 추가되면 그때 동일한 방식으로 선택자 그룹에
+    포함해야 한다는 점은 여전히 유효하다.
 - **명도 대비, 링크/강조 색상 — 통과(코드 상 값 확인, 2026-10-01 재확인)**: `design/site.css` 4~12번째
   줄 `:root` 블록의 색상 변수 9개(`--color-bg: #FFFFFF`, `--color-text: #333333`,
   `--color-heading: #1A1A1A`, `--color-link: #0B5FA5`, `--color-link-visited: #6A4C93`,
