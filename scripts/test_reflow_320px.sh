@@ -21,8 +21,10 @@
 #   1) document.documentElement.scrollWidth === clientWidth
 #      (가로 스크롤 없음)
 #   2) H1, H2, 본문 단락(p, post-date/disclaimer 제외), .table-wrapper,
-#      .disclaimer 각각이 뷰포트를 오른쪽으로 넘치지 않음(overflowsRight:
-#      false)
+#      .disclaimer, .post-date 각각이 뷰포트를 오른쪽으로 넘치지 않음
+#      (overflowsRight: false). .post-date는 2026-11-20 디자인팀 보완
+#      제안(design/review-2026-09-13-interest-rate-impact.md)에 따라
+#      2026-11-21 개발팀이 검사 대상에 추가했다.
 #   3) .page 직계 자식(형제 블록) 간 겹침이 없음(overlapPairs: [])
 #
 # 기존 design/mockup-*.html, design/site.css는 전혀 수정하지 않고 읽기만
@@ -125,6 +127,7 @@ expected_counts = {
     "p.body": 7,
     ".table-wrapper": 1,
     ".disclaimer": 1,
+    ".post-date": 1,
 }
 
 elements = data.get("elements", [])

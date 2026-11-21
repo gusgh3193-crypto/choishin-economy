@@ -48,7 +48,7 @@ async function main() {
       const clientWidth = docEl.clientWidth;
 
       // 검사 대상 요소들: H1, H2, 본문 단락(p, post-date/disclaimer 제외),
-      // .table-wrapper, .disclaimer
+      // .table-wrapper, .disclaimer, .post-date
       const selectorGroups = [
         { label: "h1", elements: Array.from(document.querySelectorAll("h1")) },
         { label: "h2", elements: Array.from(document.querySelectorAll("h2")) },
@@ -60,6 +60,7 @@ async function main() {
         },
         { label: ".table-wrapper", elements: Array.from(document.querySelectorAll(".table-wrapper")) },
         { label: ".disclaimer", elements: Array.from(document.querySelectorAll(".disclaimer")) },
+        { label: ".post-date", elements: Array.from(document.querySelectorAll(".post-date")) },
       ];
 
       const elements = [];
