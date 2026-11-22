@@ -128,7 +128,7 @@
 #      검증한다, 2026-11-01 마스터 지시로 회귀 테스트 공백을 메우기 위해 추가).
 #  22) title/meta_description/keywords 필드 누락 검출 회귀 테스트 -
 #      scripts/test_required_title_meta_keywords_field.sh를 실행해,
-#      validate_posts.sh의 REQUIRED_FIELDS(36행) 공통 루프(140~147행)가
+#      validate_posts.sh의 REQUIRED_FIELDS(41행) 공통 루프(172~178행)가
 #      title/meta_description/keywords 필드가 frontmatter에 "아예 없는"
 #      경우도 FAIL 처리하는지 검증한다. 기존에는 이 4개 필드 중 date 필드만
 #      "필드 자체가 없는 경우"를 다루는 전용 회귀 테스트
@@ -139,7 +139,7 @@
 #      건드리지 않고 임시 디렉터리에서 검증한다).
 #  23) keywords 빈 배열 검출 회귀 테스트 - scripts/test_keywords_empty_array.sh를
 #      실행해, validate_posts.sh의 3-3 검사(keywords 필드가 배열 형식([...])일
-#      때, 대괄호 안이 공백뿐인 "빈 배열"이면 FAIL 처리하는 로직, 149~159행)가
+#      때, 대괄호 안이 공백뿐인 "빈 배열"이면 FAIL 처리하는 로직, 185~191행)가
 #      실제로 동작하는지 검증한다. 다른 검사들(date 필드 필수, category 빈 값,
 #      title/meta_description 빈 값 등)은 모두 전용 회귀 테스트가 있었지만
 #      keywords 빈 배열 검사에는 없었고, test_split_keywords.sh는
@@ -152,7 +152,7 @@
 #  24) keywords 배열 항목 따옴표 검출 회귀 테스트 - scripts/test_keywords_unquoted_items.sh를
 #      실행해, validate_posts.sh의 3-5 검사(keywords 필드가 배열 형식([...])일
 #      때, 그 안의 각 항목이 따옴표(쌍따옴표 또는 홑따옴표)로 감싸여 있는지
-#      검사하고 감싸여 있지 않으면 FAIL 처리하는 로직, 162~181행)가 실제로
+#      검사하고 감싸여 있지 않으면 FAIL 처리하는 로직, 200~212행)가 실제로
 #      동작하는지 검증한다. test_split_keywords.sh는 split_keywords_items()
 #      함수 자체의 동작(쉼표 분리 로직)만 테스트할 뿐 validate_posts.sh의
 #      3-5번 검사(따옴표 유무 판정)를 직접 테스트하지 않던 공백을 메우기
@@ -164,7 +164,7 @@
 #  25) 파일명 형식 검출 회귀 테스트 - scripts/test_filename_format.sh를
 #      실행해, validate_posts.sh의 "1) 파일명 형식 검사"(FILENAME_REGEX='^[0-9]{4}-
 #      [0-9]{2}-[0-9]{2}-.+\.md$'로 파일명이 YYYY-MM-DD-슬러그.md 형식인지만
-#      보는 검사, 126~129행)가 실제로 동작하는지 검증한다. 이 검사는 3-2
+#      보는 검사, 157~160행)가 실제로 동작하는지 검증한다. 이 검사는 3-2
 #      검사(frontmatter의 date가 파일명 날짜와 일치하는지)와는 별개로,
 #      파일명 문자열 자체의 구조만 본다. 기존에는 3-2(test_date_filename_mismatch.sh),
 #      3-3(test_keywords_empty_array.sh), 3-5(test_keywords_unquoted_items.sh)와
@@ -233,7 +233,7 @@
 #  30) dateModified/updated 필드 분기 회귀 테스트 - scripts/test_date_modified_updated.sh를
 #      실행해, generate_jsonld.sh의 dateModified/updated 필드 분기(frontmatter에
 #      updated: 필드가 있으면 그 값을 dateModified로 사용하고, 없으면
-#      datePublished와 동일한 값을 dateModified로 사용하는 로직, 119~123행)가
+#      datePublished와 동일한 값을 dateModified로 사용하는 로직, 150~154행)가
 #      실제로 동작하는지 검증한다. 29)에서 메운 author 분기와 함께 2026-11-08
 #      test_missing_frontmatter.sh 조사 과정에서 전용 회귀 테스트가 약한
 #      후보로 남겨진 4가지(author Person/Organization 분기,
@@ -250,7 +250,7 @@
 #      검증한다).
 #  31) keywords 콤마-문자열 분기 회귀 테스트 - scripts/test_keywords_comma_separated.sh를
 #      실행해, generate_jsonld.sh의 keywords 분기 중 keywords가 YAML 배열이
-#      아니라 콤마로 구분된 문자열로 주어지는 경우를 처리하는 분기(164~183행)가
+#      아니라 콤마로 구분된 문자열로 주어지는 경우를 처리하는 분기(195~214행)가
 #      실제로 동작하는지 검증한다. 30)에서 메운 dateModified/updated 분기와
 #      함께 2026-11-08 test_missing_frontmatter.sh 조사 과정에서 전용 회귀
 #      테스트가 약한 후보로 남겨진 4가지(author Person/Organization 분기,
