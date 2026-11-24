@@ -4,7 +4,7 @@
 #
 # scripts/generate_jsonld.sh의 dateModified/updated 필드 분기(frontmatter에
 # updated: 필드가 있으면 그 값을 dateModified로 사용하고, 없으면
-# datePublished와 동일한 값을 dateModified로 사용하는 로직, 119~123행)가
+# datePublished와 동일한 값을 dateModified로 사용하는 로직, 150~154행)가
 # 실제로 동작하는지 확인하는 회귀 테스트다.
 #
 #   배경: 2026-11-08 test_missing_frontmatter.sh 조사 과정에서 전용 회귀

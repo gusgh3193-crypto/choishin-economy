@@ -10,7 +10,7 @@
 #   title/meta_description 빈 값 등)은 모두 전용 회귀 테스트 파일
 #   (test_required_date_field.sh, test_category_empty_field.sh,
 #   test_title_meta_empty_quoted.sh 등)이 있고 scripts/daily_check.sh에
-#   단계로 등록돼 있었지만, keywords 빈 배열 검사(3-3번, 149~159행)에는
+#   단계로 등록돼 있었지만, keywords 빈 배열 검사(3-3번, 180~191행)에는
 #   이런 전용 회귀 테스트가 없었다. scripts/test_split_keywords.sh는
 #   split_keywords_items() 함수 자체의 동작만 테스트할 뿐, validate_posts.sh의
 #   3-3번 검사(빈 배열이면 실제로 FAIL 하는지)를 직접 테스트하지 않으므로

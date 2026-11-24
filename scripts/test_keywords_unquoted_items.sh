@@ -4,7 +4,7 @@
 #
 # scripts/validate_posts.sh의 3-5 검사(keywords 필드가 배열 형식([...])일 때,
 # 그 안의 각 항목이 따옴표(쌍따옴표 또는 홑따옴표)로 감싸여 있는지 검사하고,
-# 감싸여 있지 않으면 FAIL 처리하는 로직, 162~181행)가 실제로 동작하는지
+# 감싸여 있지 않으면 FAIL 처리하는 로직, 193~212행)가 실제로 동작하는지
 # 확인하는 회귀 테스트다.
 #
 #   배경: validate_posts.sh의 다른 검사들(date 필드 필수, category 빈 값,
@@ -12,7 +12,7 @@
 #   파일(test_required_date_field.sh, test_category_empty_field.sh,
 #   test_title_meta_empty_quoted.sh, test_keywords_empty_array.sh 등)이 있고
 #   scripts/daily_check.sh에 단계로 등록돼 있었지만, keywords 배열 항목
-#   따옴표 검사(3-5번, 162~181행)에는 이런 전용 회귀 테스트가 없었다.
+#   따옴표 검사(3-5번, 193~212행)에는 이런 전용 회귀 테스트가 없었다.
 #   scripts/test_split_keywords.sh는 split_keywords_items() 함수 자체의
 #   동작(쉼표 분리 로직)만 테스트할 뿐, validate_posts.sh의 3-5번 검사(따옴표
 #   유무 판정)를 직접 테스트하지 않으므로 이 공백을 메우기 위해 2026-11-05

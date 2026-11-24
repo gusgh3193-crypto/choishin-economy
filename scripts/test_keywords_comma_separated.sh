@@ -4,7 +4,7 @@
 #
 # scripts/generate_jsonld.sh의 keywords 분기 중, keywords가 YAML 배열
 # ([...]) 형식이 아니라 콤마로 구분된 문자열(comma-separated string)로
-# 주어지는 경우를 처리하는 분기(164~183행, "배열 표기가 아니라 콤마로
+# 주어지는 경우를 처리하는 분기(195~211행, "배열 표기가 아니라 콤마로
 # 구분된 문자열인 경우")가 실제로 동작하는지 확인하는 회귀 테스트다.
 #
 #   배경: 2026-11-08 test_missing_frontmatter.sh 조사 과정에서 전용 회귀

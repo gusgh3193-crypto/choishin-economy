@@ -2,10 +2,10 @@
 #
 # test_filename_format.sh
 #
-# scripts/validate_posts.sh의 "1) 파일명 형식 검사" 로직(126~129행 부근,
-# FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$'로 파일명이
-# YYYY-MM-DD-슬러그.md 형식인지만 보는 검사)이 실제로 동작하는지 확인하는
-# 회귀 테스트다.
+# scripts/validate_posts.sh의 "1) 파일명 형식 검사" 로직(34행의
+# FILENAME_REGEX='^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$' 정의와 157~160행의
+# 실제 사용 검사로, 파일명이 YYYY-MM-DD-슬러그.md 형식인지만 보는 검사)이
+# 실제로 동작하는지 확인하는 회귀 테스트다.
 #
 #   배경: 이 검사(1번)는 "3-2) frontmatter의 date 필드가 파일명의 날짜와
 #   일치하는지 검사"(scripts/test_date_filename_mismatch.sh가 다룬다)와는

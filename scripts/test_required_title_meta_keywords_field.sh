@@ -3,7 +3,7 @@
 # test_required_title_meta_keywords_field.sh
 #
 # scripts/validate_posts.sh의 REQUIRED_FIELDS(title, meta_description,
-# keywords, date)에 대한 필수 필드 검사(140~147행 공통 루프) 중,
+# keywords, date)에 대한 필수 필드 검사(171~178행 공통 루프) 중,
 # title / meta_description / keywords 필드가 frontmatter에 "아예 없는"
 # 경우를 다루는 전용 회귀 테스트다.
 #
